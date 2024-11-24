@@ -28,6 +28,10 @@ ManagerWindow::ManagerWindow(QWidget *parent)
         "}");
     ui->tableWidget->horizontalHeader()->resizeSection(3, 180);
     ui->tableWidget->verticalHeader()->setVisible(false);
+    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->tableWidget->resizeColumnsToContents();
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
      //таблица 2
     ui->tableWidget_2->setColumnCount(8);
     ui->tableWidget_2->setRowCount(150);
@@ -47,6 +51,9 @@ ManagerWindow::ManagerWindow(QWidget *parent)
         "}");
     ui->tableWidget_2->verticalHeader()->setVisible(false);
     ui->tableWidget_2->horizontalHeader()->resizeSection(3, 180);
+    ui->tableWidget_2->horizontalHeader()->setStretchLastSection(true);
+    ui->tableWidget_2->resizeColumnsToContents();
+    ui->tableWidget_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
 
     // свич табы
