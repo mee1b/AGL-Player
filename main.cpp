@@ -1,5 +1,5 @@
 #include "managerwindow.h"
-#include "headerwindow.h"
+#include "mainwindow.h"
 
 #include <Windows.h>
 #include <QApplication>
@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     SetConsoleOutputCP(1251);
 
     QApplication a(argc, argv);
-    headerwindow h;
+    MainWindow h;
     h.show();
     ManagerWindow w;
     w.show();

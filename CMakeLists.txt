@@ -23,7 +23,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(AGL-Manager
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        headerwindow.h headerwindow.cpp headerwindow.ui
+
+        mainwindow.h mainwindow.cpp mainwindow.ui
+
 
 
 

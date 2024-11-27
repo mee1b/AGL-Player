@@ -1,5 +1,7 @@
 #include "managerwindow.h"
 #include "./ui_managerwindow.h"
+#include <QShortcut>
+#include <QMessageBox>
 
 
 ManagerWindow::ManagerWindow(QWidget *parent)
@@ -9,6 +11,7 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
+
     //таблица 1
     ui->tableWidget->setColumnCount(8);
     ui->tableWidget->setRowCount(150);
@@ -31,6 +34,12 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    for (int i = 0; i < tableName.size(); ++i)
+    {
+        ui->tableWidget->setItem(0, i, new QTableWidgetItem(tableName[i]));
+        ui->tableWidget->setItem(1, i, new QTableWidgetItem(tableName_2[i]));
+        ui->tableWidget->resizeColumnsToContents();
+    }
 
      //таблица 2
     ui->tableWidget_2->setColumnCount(8);
@@ -54,11 +63,25 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget_2->horizontalHeader()->setStretchLastSection(true);
     ui->tableWidget_2->resizeColumnsToContents();
     ui->tableWidget_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    for (int i = 0; i < tableName.size(); ++i)
+    {
+        ui->tableWidget_2->setItem(0, i, new QTableWidgetItem(tableName[i]));
+        ui->tableWidget_2->setItem(1, i, new QTableWidgetItem(tableName_2[i]));
+        ui->tableWidget_2->resizeColumnsToContents();
+    }
+
 
 
     // свич табы
     ui->tabWidget->setTabText(0, "Установленные игры");
     ui->tabWidget->setTabText(1, "Репозиторий игр");
+
+    //Hot keys для кнопок
+    ui->pushButton->setShortcut(QKeySequence("Ctrl+Q"));
+    ui->pushButton_2->setShortcut(QKeySequence("Ctrl+W"));
+    ui->pushButton_3->setShortcut(QKeySequence("Ctrl+E"));
+    ui->pushButton_4->setShortcut(QKeySequence("Ctrl+R"));
+
 
 }
 
@@ -66,3 +89,29 @@ ManagerWindow::~ManagerWindow()
 {
     delete ui;
 }
+
+
+
+void ManagerWindow::on_pushButton_clicked()
+{
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
+
+
+void ManagerWindow::on_pushButton_2_clicked()
+{
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
+
+
+void ManagerWindow::on_pushButton_3_clicked()
+{
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
+
+
+void ManagerWindow::on_pushButton_4_clicked()
+{
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
+
