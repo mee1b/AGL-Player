@@ -18,7 +18,7 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget->setHorizontalHeaderLabels(QStringList()    << "Название"
                                                                 << "Автор"
                                                                 << "Доступна"
-                                                                << "Комментрай о доступности"
+                                                                << "Комментарий о доступности"
                                                                 << "Версия"
                                                                 << "Размер"
                                                                 << "Кратко"
@@ -32,13 +32,15 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget->horizontalHeader()->resizeSection(3, 180);
     ui->tableWidget->verticalHeader()->setVisible(false);
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
-    ui->tableWidget->resizeColumnsToContents();
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     for (int i = 0; i < tableName.size(); ++i)
     {
         ui->tableWidget->setItem(0, i, new QTableWidgetItem(tableName[i]));
         ui->tableWidget->setItem(1, i, new QTableWidgetItem(tableName_2[i]));
-        ui->tableWidget->resizeColumnsToContents();
+    }
+    for (int i = 0; i < 8; ++i)
+    {
+        ui->tableWidget->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Stretch);
     }
 
      //таблица 2
@@ -47,7 +49,7 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget_2->setHorizontalHeaderLabels(QStringList()  << "Название"
                                                                 << "Автор"
                                                                 << "Доступна"
-                                                                << "Комментрай о доступности"
+                                                                << "Комментарий о доступности"
                                                                 << "Версия"
                                                                 << "Размер"
                                                                 << "Кратко"
@@ -61,7 +63,6 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tableWidget_2->verticalHeader()->setVisible(false);
     ui->tableWidget_2->horizontalHeader()->resizeSection(3, 180);
     ui->tableWidget_2->horizontalHeader()->setStretchLastSection(true);
-    ui->tableWidget_2->resizeColumnsToContents();
     ui->tableWidget_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
     for (int i = 0; i < tableName.size(); ++i)
     {
@@ -77,10 +78,10 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tabWidget->setTabText(1, "Репозиторий игр");
 
     //Hot keys для кнопок
-    ui->pushButton->setShortcut(QKeySequence("Ctrl+Q"));
-    ui->pushButton_2->setShortcut(QKeySequence("Ctrl+W"));
-    ui->pushButton_3->setShortcut(QKeySequence("Ctrl+E"));
-    ui->pushButton_4->setShortcut(QKeySequence("Ctrl+R"));
+    ui->pushButton->setShortcut(QKeySequence("F1"));
+    ui->pushButton_2->setShortcut(QKeySequence("F3"));
+    ui->pushButton_3->setShortcut(QKeySequence("DEL"));
+    ui->pushButton_4->setShortcut(QKeySequence("F5"));
 
 
 }
@@ -94,24 +95,24 @@ ManagerWindow::~ManagerWindow()
 
 void ManagerWindow::on_pushButton_clicked()
 {
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_2_clicked()
 {
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_3_clicked()
 {
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_4_clicked()
 {
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
 }
 

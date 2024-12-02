@@ -21,14 +21,14 @@
        <bool>true</bool>
       </property>
       <property name="text">
-       <string>Продолжить последнюю игру</string>
+       <string>Продолжить последнюю игру (F3)</string>
       </property>
      </widget>
     </item>
     <item row="1" column="0" colspan="4">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="documentMode">
        <bool>false</bool>
@@ -42,7 +42,7 @@
       <property name="tabBarAutoHide">
        <bool>false</bool>
       </property>
-      <widget class="QWidget" name="tabWidgetPage1">
+      <widget class="QWidget" name="firstTable">
        <attribute name="title">
         <string/>
        </attribute>
@@ -52,14 +52,11 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabWidgetPage2">
+      <widget class="QWidget" name="secondTable">
        <attribute name="title">
         <string/>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="2" column="1">
-         <widget class="QTableWidget" name="tableWidget_2"/>
-        </item>
         <item row="1" column="1">
          <widget class="QCheckBox" name="checkBox">
           <property name="text">
@@ -96,6 +93,9 @@
           </item>
          </widget>
         </item>
+        <item row="2" column="1">
+         <widget class="QTableWidget" name="tableWidget_2"/>
+        </item>
        </layout>
       </widget>
      </widget>
@@ -106,7 +106,7 @@
        <bool>true</bool>
       </property>
       <property name="text">
-       <string>Играть</string>
+       <string>Играть (ENTER)</string>
       </property>
      </widget>
     </item>
@@ -116,7 +116,7 @@
        <bool>true</bool>
       </property>
       <property name="text">
-       <string>Обновить данные</string>
+       <string>Обновить данные (F5)</string>
       </property>
      </widget>
     </item>
@@ -126,7 +126,7 @@
        <bool>true</bool>
       </property>
       <property name="text">
-       <string>Удалить</string>
+       <string>Удалить (DEL)</string>
       </property>
      </widget>
     </item>

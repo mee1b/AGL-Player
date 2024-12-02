@@ -16,7 +16,6 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
-    ~MainWindow();
 
     void loadFile(const QString &fileName);
 
@@ -46,7 +45,6 @@ private:
 
     QPlainTextEdit *textEdit;
     QString curFile;
-    ManagerWindow *mw;
 };
 #endif // MAINWINDOW_H
 /*Общедоступный API ограничен конструктором. В protected разделе мы переопределяем QWidget::closeEvent(), чтобы определять, когда пользователь пытается закрыть окно,
