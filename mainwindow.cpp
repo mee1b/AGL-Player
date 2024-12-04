@@ -34,6 +34,7 @@ MainWindow::MainWindow()
 
     QPlainTextEdit *enterText = new QPlainTextEdit;
 
+
     createActions();
     createStatusBar();
 
@@ -147,26 +148,135 @@ void MainWindow::documentWasModified()
 Способ, которым это делается, зависит от платформы.
 */
 
+void MainWindow::exit()
+{
+    QWidget::close();
+}
+
 void MainWindow::createActions()
 {
     QMenu *fileMenu = menuBar()->addMenu(tr("&Файл"));
-    QAction *newAct = new QAction(tr("Менеджер игр"), this);
-    newAct->setShortcut(QKeySequence::New);
-    newAct->setStatusTip(tr("Открыть менеджер игр"));
-    connect(newAct, &QAction::triggered, this, &MainWindow::newFile);
-    fileMenu->addAction(newAct);
+    QAction *gameManager = new QAction(tr("Менеджер игр"), this);
+    gameManager->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_M));
+    gameManager->setStatusTip(tr("Открыть менеджер игр"));
+    connect(gameManager, &QAction::triggered, this, &MainWindow::newFile);
+    fileMenu->addAction(gameManager);
+    QAction *addGame = new QAction(tr("Добавить игру в библиотеку"), this);
+    addGame->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    addGame->setStatusTip(tr("Добавить игру в библиотеку"));
+    fileMenu->addAction(addGame);
+    QAction *openSave = new QAction(tr("Открыть сохранение"), this);
+    openSave->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
+    openSave->setStatusTip(tr("Открыть сохранение"));
+    fileMenu->addAction(openSave);
+    QAction *openSaveDontReload = new QAction(tr("Открыть сохранение без перезагрузки библиотеки"), this);
+    openSaveDontReload->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
+    openSaveDontReload->setStatusTip(tr("Открыть сохранение без перезагрузки библиотеки"));
+    fileMenu->addAction(openSaveDontReload);
+    QAction *saveGame = new QAction(tr("Сохранить игру"), this);
+    saveGame->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
+    saveGame->setStatusTip(tr("Сохранить игру"));
+    fileMenu->addAction(saveGame);
+    QAction *startGameAgain = new QAction(tr("Начать игру заново"), this);
+    startGameAgain->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
+    startGameAgain->setStatusTip(tr("Начать игру заново"));
+    fileMenu->addAction(startGameAgain);
+    fileMenu->addSeparator();
+    QAction *resetAllSettings = new QAction(tr("Сбросить все настройки"), this);
+    resetAllSettings->setStatusTip(tr("Сбросить все настройки"));
+    resetAllSettings->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_Z);
+    fileMenu->addAction(resetAllSettings);
+    QAction *exit = new QAction(tr("Выход"), this);
+    exit->setStatusTip(tr("Выход"));
+    exit->setShortcut(QKeySequence::Close);
+    connect(exit, &QAction::triggered, this, &MainWindow::exit);
+    fileMenu->addAction(exit);
+
 
     QMenu *showMenu = menuBar()->addMenu(tr("&Просмотр"));
-    QAction *newAct_2 = showMenu->addAction(tr("Настройка"));
-    newAct_2->setShortcut(QKeySequence::Close);
+    QAction *setting = addAction(tr("Настройка"));
+    setting->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
+    setting->setStatusTip("Настройка");
+    showMenu->addAction(setting);
+    QAction *search = addAction(tr("Поиск"));
+    search->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F));
+    search->setStatusTip(tr("Поиск"));
+    showMenu->addAction(search);
+    QAction *searchFurther = addAction(tr("Найти далее"));
+    searchFurther->setShortcut(QKeySequence(Qt::Key_F1));
+    searchFurther->setStatusTip(tr("Найти далее"));
+    showMenu->addAction(searchFurther);
+    QAction *sceneText = addAction(tr("Текст сцены"));
+    sceneText->setShortcut(QKeySequence(Qt::Key_F2));
+    sceneText->setStatusTip(tr("Текст сцены"));
+    showMenu->addAction(sceneText);
+    QAction *objectList = addAction(tr("Перейти к списку объектов"));
+    objectList->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_1));
+    objectList->setStatusTip(tr("Перейти к списку объектов"));
+    showMenu->addAction(objectList);
+    QAction *inventList = addAction(tr("Перейти к списку инвентаря"));
+    inventList->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_2));
+    inventList->setStatusTip(tr("Перейти к списку инвентаря"));
+    showMenu->addAction(inventList);
+    QAction *wayList = addAction(tr("Перейти к списку путей"));
+    wayList->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_3));
+    wayList->setStatusTip(tr("Перейти к списку путей"));
+    showMenu->addAction(wayList);
+    QAction *debugMode = addAction(tr("Режим отладки"));
+    debugMode->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
+    debugMode->setStatusTip(tr("Режим отладки"));
+    showMenu->addAction(debugMode);
+    QAction *logOn = addAction(tr("Включить логирование"));
+    logOn->setShortcut(QKeySequence::Close);
+    logOn->setStatusTip(tr("Включить логирование"));
+    showMenu->addAction(logOn);
 
     QMenu *soundMenu = menuBar()->addMenu(tr("&Звук"));
-    QAction *newAct_3 = soundMenu->addAction(tr("Музыка громче"));
-    newAct_3->setShortcut(QKeySequence::Open);
+    QAction *musicUp = addAction(tr("Музыка громче"));
+    musicUp->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F1));
+    musicUp->setStatusTip(tr("Музыка громче"));
+    soundMenu->addAction(musicUp);
+    QAction *musicLow = addAction(tr("Музыка тише"));
+    musicLow->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F2));
+    musicLow->setStatusTip(tr("Музыка тише"));
+    soundMenu->addAction(musicLow);
+    QAction *switchMusic = addAction(tr("Музыка включена"));
+    switchMusic->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F3));
+    switchMusic->setStatusTip(tr("Музыка включена"));
+    switchMusic->setCheckable(true);
+    soundMenu->addAction(switchMusic);
+    QAction *soundUp = addAction(tr("Звуки громче"));
+    soundUp->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F1));
+    soundUp->setStatusTip(tr("Звуки громче"));
+    soundMenu->addAction(soundUp);
+    QAction *soundLow = addAction(tr("Звуки Тише"));
+    soundLow->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F2));
+    soundLow->setStatusTip(tr("Звуки Тише"));
+    soundMenu->addAction(soundLow);
+    QAction *switchSound = addAction(tr("Звуки включены"));
+    switchSound->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F3));
+    switchSound->setStatusTip(tr("Звуки включены"));
+    switchSound->setCheckable(true);
+    soundMenu->addAction(switchSound);
+    QAction *alertUp = addAction(tr("Уведомления громче"));
+    alertUp->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_5));
+    alertUp->setStatusTip(tr("Уведомления громче"));
+    soundMenu->addAction(alertUp);
+    QAction *alertLow = addAction(tr("Уведомления тише"));
+    alertLow->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_6));
+    alertLow->setStatusTip(tr("Уведомления тише"));
+    soundMenu->addAction(alertLow);
+    QAction *switchAlert = addAction(tr("Уведомления включены"));
+    switchAlert->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_7));
+    switchAlert->setStatusTip(tr("Уведомления включены"));
+    switchAlert->setCheckable(true);
+    soundMenu->addAction(switchAlert);
 
     QMenu *helpMenu = menuBar()->addMenu(tr("&Справка"));
-    QAction *findOutput = helpMenu->addAction(tr("Текущий способ вывода"));
-    findOutput->setShortcut(QKeySequence::Paste);
+    QAction *findOutput = addAction(tr("Текущий способ вывода"));
+    findOutput->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_M));
+    findOutput->setStatusTip(tr("Текущий способ вывода"));
+    helpMenu->addAction(findOutput);
 
     /*#ifndef QT_NO_CLIPBOARD
     cutAct->setEnabled(false);

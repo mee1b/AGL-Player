@@ -11,6 +11,9 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
+    setWindowFlags(Qt::Window | Qt::WindowTitleHint);
+    setWindowFlag(Qt::WindowCloseButtonHint, true);
+
 
     //таблица 1
     ui->tableWidget->setColumnCount(8);
@@ -29,19 +32,15 @@ ManagerWindow::ManagerWindow(QWidget *parent)
         "  border-style: solid;"
         "  border-color: black;"
         "}");
-    ui->tableWidget->horizontalHeader()->resizeSection(3, 180);
     ui->tableWidget->verticalHeader()->setVisible(false);
-    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     for (int i = 0; i < tableName.size(); ++i)
     {
         ui->tableWidget->setItem(0, i, new QTableWidgetItem(tableName[i]));
         ui->tableWidget->setItem(1, i, new QTableWidgetItem(tableName_2[i]));
+        ui->tableWidget->resizeColumnsToContents();
     }
-    for (int i = 0; i < 8; ++i)
-    {
-        ui->tableWidget->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Stretch);
-    }
+
 
      //таблица 2
     ui->tableWidget_2->setColumnCount(8);
@@ -62,7 +61,6 @@ ManagerWindow::ManagerWindow(QWidget *parent)
         "}");
     ui->tableWidget_2->verticalHeader()->setVisible(false);
     ui->tableWidget_2->horizontalHeader()->resizeSection(3, 180);
-    ui->tableWidget_2->horizontalHeader()->setStretchLastSection(true);
     ui->tableWidget_2->setEditTriggers(QAbstractItemView::NoEditTriggers);
     for (int i = 0; i < tableName.size(); ++i)
     {
@@ -78,10 +76,10 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->tabWidget->setTabText(1, "Репозиторий игр");
 
     //Hot keys для кнопок
-    ui->pushButton->setShortcut(QKeySequence("F1"));
-    ui->pushButton_2->setShortcut(QKeySequence("F3"));
-    ui->pushButton_3->setShortcut(QKeySequence("DEL"));
-    ui->pushButton_4->setShortcut(QKeySequence("F5"));
+    ui->pushButton->setShortcut(QKeySequence(Qt::Key_Return));
+    ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_F3));
+    ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_Delete));
+    ui->pushButton_4->setShortcut(QKeySequence(Qt::Key_F5));
 
 
 }

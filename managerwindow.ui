@@ -153,6 +153,25 @@
     <string>!</string>
    </property>
   </action>
+  <action name="actionhhj">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>hhj</string>
+   </property>
+  </action>
+  <action name="actionsdff">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>sdff</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
