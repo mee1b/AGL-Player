@@ -32,7 +32,14 @@ MainWindow::MainWindow()
     textEdit->setReadOnly(true);
     textEdit->zoomIn(3);
 
-    QPlainTextEdit *enterText = new QPlainTextEdit;
+    QLineEdit *enterText = new QLineEdit;
+    QHBoxLayout *layout = new QHBoxLayout();
+    layout->addWidget(enterText);
+    textEdit->setLayout(layout);
+    layout->setAlignment(enterText, Qt::AlignBottom);
+    connect(enterText, SIGNAL(returnPressed()), SLOT(tapText()));
+
+
 
 
     createActions();
@@ -64,6 +71,10 @@ MainWindow::MainWindow()
 
 В конце мы задаём заголовок окна с помощью приватной функции setCurrentFile(). Мы вернёмся к этому позже.
 */
+void MainWindow::tapText()
+{
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {

@@ -93,24 +93,24 @@ ManagerWindow::~ManagerWindow()
 
 void ManagerWindow::on_pushButton_clicked()
 {
-    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_2_clicked()
 {
-    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_3_clicked()
 {
-    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 void ManagerWindow::on_pushButton_4_clicked()
 {
-    QMessageBox::warning(this, tr("Error!"), tr("Не реализовано!"));
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 

@@ -29,6 +29,7 @@ private slots:
     bool saveAs();
     void about();
     void documentWasModified();
+    void tapText();
     void exit();
 #ifndef QT_NO_SESSIONMANAGER
     void commitData(QSessionManager &manager);

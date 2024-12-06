@@ -17,6 +17,8 @@ set(PROJECT_SOURCES
         managerwindow.cpp
         managerwindow.h
         managerwindow.ui
+        mainwindow.h
+        mainwindow.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -24,7 +26,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
 
-        mainwindow.h mainwindow.cpp mainwindow.ui
+        mainwindow.h mainwindow.cpp
 
 
 
