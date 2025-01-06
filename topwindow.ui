@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TopWindow</class>
+ <widget class="QMainWindow" name="TopWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPlainTextEdit" name="headerText">
+      <property name="font">
+       <font>
+        <pointsize>13</pointsize>
+       </font>
+      </property>
+      <property name="plainText">
+       <string>Краткая справка:
+Для начала новой игры из библиотеки нажмите CTRL+M и выберите игру и нажмите ENTER.
+Если вы скачали игру, которой нет в библиотеке, то нажмите CTRL+N и выберите архив с игрой.
+Для того чтобы играть выберите пункт в одном из списков - объекты, инвентарь, пути и нажмите клавишу ENTER.
+Когда вы находитесь в инвентаре, вам необходимо сначала выбрать пункт, нажать ENTER, а затем выбрать второй пункт и нажать ENTER.
+Поле ввода служит для ввода текста в метапарсерных играх (только instead 3),или для ввода команд,если в этом есть необходимость. В метапарсерных играх,скорее всего,взаимодействие с инвентарём не будет работать.
+Если при взаимодействием с объектами или при вводе текста ничего не изменилось,значит,скорее всего,текст остался тем же,какой был перед взаимодействием с объектами или ввода команды.
+Сохранение и загрузка игр происходит обязательно в каталоге с текущей игрой (иногда в подкаталоге autosaves,если игра сама сохраняет своё состояние), менять на другой нельзя.
+При сохранении, указывайте пожалуйста имя файла латинскими буквами или цифрами.
+Внимание! Большие архивы могут не распаковываться программой через менеджер или установку в библиотеку. Попробуйте самостоятельно распаковать их в папку с играми.</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="enterText">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="fileMenu">
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="tabletTracking">
+     <bool>false</bool>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::FocusPolicy::NoFocus</enum>
+    </property>
+    <property name="title">
+     <string>Файл</string>
+    </property>
+    <addaction name="gameManager"/>
+    <addaction name="addGame"/>
+    <addaction name="openSave"/>
+    <addaction name="openSaveDontReload"/>
+    <addaction name="saveGame"/>
+    <addaction name="startGameAgain"/>
+    <addaction name="separator"/>
+    <addaction name="resetAllSettings"/>
+    <addaction name="quit"/>
+   </widget>
+   <widget class="QMenu" name="searchMenu">
+    <property name="focusPolicy">
+     <enum>Qt::FocusPolicy::NoFocus</enum>
+    </property>
+    <property name="title">
+     <string>Просмотр</string>
+    </property>
+    <addaction name="setting"/>
+    <addaction name="search"/>
+    <addaction name="searchFurther"/>
+    <addaction name="sceneText"/>
+    <addaction name="objectList"/>
+    <addaction name="inventList"/>
+    <addaction name="wayList"/>
+    <addaction name="debugMode"/>
+    <addaction name="logOn"/>
+   </widget>
+   <widget class="QMenu" name="soundMenu">
+    <property name="focusPolicy">
+     <enum>Qt::FocusPolicy::NoFocus</enum>
+    </property>
+    <property name="title">
+     <string>Звук</string>
+    </property>
+    <addaction name="musicUp"/>
+    <addaction name="musicLow"/>
+    <addaction name="switchMusic"/>
+    <addaction name="soundUp"/>
+    <addaction name="soundLow"/>
+    <addaction name="switchSound"/>
+    <addaction name="alertUp"/>
+    <addaction name="alertLow"/>
+    <addaction name="switchAlert"/>
+   </widget>
+   <widget class="QMenu" name="helpMenu">
+    <property name="focusPolicy">
+     <enum>Qt::FocusPolicy::NoFocus</enum>
+    </property>
+    <property name="title">
+     <string>Справка</string>
+    </property>
+    <addaction name="findOutput"/>
+   </widget>
+   <addaction name="fileMenu"/>
+   <addaction name="searchMenu"/>
+   <addaction name="soundMenu"/>
+   <addaction name="helpMenu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="gameManager">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Менеджер игр</string>
+   </property>
+  </action>
+  <action name="addGame">
+   <property name="text">
+    <string>Добавить игру в библиотеку</string>
+   </property>
+  </action>
+  <action name="openSave">
+   <property name="text">
+    <string>Открыть сохранение</string>
+   </property>
+  </action>
+  <action name="openSaveDontReload">
+   <property name="text">
+    <string>Открыть сохранение без перезагрузки библиотеки</string>
+   </property>
+  </action>
+  <action name="saveGame">
+   <property name="text">
+    <string>Сохранить игру</string>
+   </property>
+  </action>
+  <action name="startGameAgain">
+   <property name="text">
+    <string>Начать игру заново</string>
+   </property>
+  </action>
+  <action name="resetAllSettings">
+   <property name="text">
+    <string>Сбросить все настройки</string>
+   </property>
+  </action>
+  <action name="quit">
+   <property name="text">
+    <string>Выход</string>
+   </property>
+  </action>
+  <action name="setting">
+   <property name="text">
+    <string>Настройки</string>
+   </property>
+  </action>
+  <action name="search">
+   <property name="text">
+    <string>Поиск</string>
+   </property>
+  </action>
+  <action name="searchFurther">
+   <property name="text">
+    <string>Найти далее</string>
+   </property>
+  </action>
+  <action name="sceneText">
+   <property name="text">
+    <string>Текст сцены</string>
+   </property>
+  </action>
+  <action name="objectList">
+   <property name="text">
+    <string>Перейти к списку объектов</string>
+   </property>
+  </action>
+  <action name="inventList">
+   <property name="text">
+    <string>Перейти к списку инвентаря</string>
+   </property>
+  </action>
+  <action name="wayList">
+   <property name="text">
+    <string>Перейти к списку путей</string>
+   </property>
+  </action>
+  <action name="debugMode">
+   <property name="text">
+    <string>Режим отладки</string>
+   </property>
+  </action>
+  <action name="logOn">
+   <property name="text">
+    <string>Включить логирование</string>
+   </property>
+  </action>
+  <action name="musicUp">
+   <property name="text">
+    <string>Музыка громче</string>
+   </property>
+  </action>
+  <action name="musicLow">
+   <property name="text">
+    <string>Музыка тише</string>
+   </property>
+  </action>
+  <action name="switchMusic">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Музыка включена</string>
+   </property>
+  </action>
+  <action name="soundUp">
+   <property name="text">
+    <string>Звуки громче</string>
+   </property>
+  </action>
+  <action name="soundLow">
+   <property name="text">
+    <string>Звуки тише</string>
+   </property>
+  </action>
+  <action name="switchSound">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Звуки включены</string>
+   </property>
+  </action>
+  <action name="alertUp">
+   <property name="text">
+    <string>Уведомления громче</string>
+   </property>
+  </action>
+  <action name="alertLow">
+   <property name="text">
+    <string>Уведомления тише</string>
+   </property>
+  </action>
+  <action name="switchAlert">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Уведомления включены</string>
+   </property>
+  </action>
+  <action name="findOutput">
+   <property name="text">
+    <string>Текущий способ вывода</string>
+   </property>
+  </action>
+ </widget>
+ <tabstops>
+  <tabstop>enterText</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

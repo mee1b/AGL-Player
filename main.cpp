@@ -1,10 +1,11 @@
 #include "managerwindow.h"
-#include "mainwindow.h"
+#include "topwindow.h"
 
 #include <Windows.h>
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QListWidget>
 
 int main(int argc, char *argv[])
 {
@@ -22,13 +23,12 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("file", "The file to open");
     parser.process(a);
 
-    MainWindow mw;
-    mw.show();
+    TopWindow tw;
+    tw.show();
     ManagerWindow w;
     w.show();
+
     return a.exec();
-
-
 }
 /*Основная функция использует QCommandLineParser для проверки,
  * был ли передан приложению какой-либо аргумент файла, и загружает его с помощью MainWindow::loadFile().*/

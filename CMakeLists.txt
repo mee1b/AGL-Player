@@ -17,40 +17,15 @@ set(PROJECT_SOURCES
         managerwindow.cpp
         managerwindow.h
         managerwindow.ui
-        mainwindow.h
-        mainwindow.cpp
+
+
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(AGL-Manager
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
 
-        mainwindow.h mainwindow.cpp
+add_executable(AGL-Manager
+    ${PROJECT_SOURCES}
+    topwindow.h topwindow.cpp topwindow.ui)
 
-
-
-
-
-
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET AGL-Manager APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-else()
-    if(ANDROID)
-        add_library(AGL-Manager SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(AGL-Manager
-            ${PROJECT_SOURCES}
-        )
-    endif()
-endif()
 
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 

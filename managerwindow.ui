@@ -10,25 +10,18 @@
     <height>484</height>
    </rect>
   </property>
+  <property name="cursor">
+   <cursorShape>ArrowCursor</cursorShape>
+  </property>
   <property name="windowTitle">
    <string>ManagerWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="3" column="1">
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Продолжить последнюю игру (F3)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0" colspan="4">
+    <item row="0" column="0" colspan="4">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="documentMode">
        <bool>false</bool>
@@ -48,7 +41,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="QTableWidget" name="tableWidget"/>
+         <widget class="QListWidget" name="listWidget_2"/>
         </item>
        </layout>
       </widget>
@@ -57,13 +50,6 @@
         <string/>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="checkBox">
-          <property name="text">
-           <string>Включая бета-версии</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="QComboBox" name="comboBox">
           <item>
@@ -93,14 +79,21 @@
           </item>
          </widget>
         </item>
+        <item row="1" column="1">
+         <widget class="QCheckBox" name="checkBox">
+          <property name="text">
+           <string>Включая бета-версии</string>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="1">
-         <widget class="QTableWidget" name="tableWidget_2"/>
+         <widget class="QListWidget" name="listWidget"/>
         </item>
        </layout>
       </widget>
      </widget>
     </item>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <widget class="QPushButton" name="pushButton">
       <property name="enabled">
        <bool>true</bool>
@@ -110,23 +103,42 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="3">
+    <item row="2" column="1">
      <widget class="QPushButton" name="pushButton_4">
       <property name="enabled">
        <bool>true</bool>
       </property>
+      <property name="focusPolicy">
+       <enum>Qt::FocusPolicy::StrongFocus</enum>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LayoutDirection::LeftToRight</enum>
+      </property>
       <property name="text">
-       <string>Обновить данные (F5)</string>
+       <string>Продолжить последнюю игру (F3)</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="2">
-     <widget class="QPushButton" name="pushButton_3">
+    <item row="2" column="3">
+     <widget class="QPushButton" name="pushButton_2">
       <property name="enabled">
        <bool>true</bool>
       </property>
       <property name="text">
        <string>Удалить (DEL)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LayoutDirection::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Обновить данные (F5)</string>
       </property>
      </widget>
     </item>
@@ -173,6 +185,17 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>listWidget_2</tabstop>
+  <tabstop>comboBox</tabstop>
+  <tabstop>checkBox</tabstop>
+  <tabstop>listWidget</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>pushButton_4</tabstop>
+  <tabstop>pushButton_3</tabstop>
+  <tabstop>pushButton_2</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
