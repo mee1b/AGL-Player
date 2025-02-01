@@ -11,9 +11,13 @@ TopWindow::TopWindow(QWidget *parent)
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->setReadOnly(true);
-    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(tapText()));
+    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
 
     createActionsName();
+    if(!loadPlugin())
+    {
+        QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
+    }
 }
 
 TopWindow::~TopWindow()
@@ -111,6 +115,30 @@ void TopWindow::createActionsName()
     ui->findOutput->setStatusTip(tr("Текущий способ вывода"));
 }
 
+bool TopWindow::loadPlugin()
+{
+    QDir pluginsDir(QCoreApplication::applicationDirPath());
+    if(pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Debug" || pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Release")
+        pluginsDir.cdUp();
+
+    pluginsDir.cd("plugins");
+    pluginsDir.cd("echo");
+    const QStringList entries = pluginsDir.entryList(QDir::Files);
+    for (const QString& fileName : entries)
+    {
+        QPluginLoader pluginLoad(pluginsDir.absoluteFilePath(fileName));
+        QObject* plugin = pluginLoad.instance();
+        if(plugin)
+        {
+            echoInterface = qobject_cast<EchoInterface*>(plugin);
+            if(echoInterface) return true;
+            pluginLoad.unload();
+        }
+    }
+
+    return false;
+}
+
 void TopWindow::managerOpen()
 {
     mw = new ManagerWindow;
@@ -122,7 +150,8 @@ void TopWindow::exit()
     QWidget::close();
 }
 
-void TopWindow::tapText()
+void TopWindow::sendEcho()
 {
-    QMessageBox::information(this, tr("Ошибка!"), tr("Не реализованно!"));
+    QString text = echoInterface->echo(ui->enterText->text());
+    ui->headerText->setPlainText(text);
 }

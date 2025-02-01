@@ -24,6 +24,17 @@ add_executable(AGL-Manager
     ${PROJECT_SOURCES}
     topwindow.h topwindow.cpp topwindow.ui)
 
+add_subdirectory(plugins)
+target_include_directories(AGL-Manager PRIVATE plugins/echo)
+find_path(ECHO_INCLUDE_DIR echo.h)
+find_library(ECHO_LIBRARY libecho.dll)
+if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
+    set(ECHO_FOUND TRUE)
+    include_directories(${ECHO_INCLUDE_DIR})
+    set(PATH_TO_MY_LIB ${PATH_TO_MY_LIB} ${ECHO_LIBRARY})
+endif()
+target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_MY_LIB})
+
 
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 

@@ -3,7 +3,10 @@
 
 #include <QMainWindow>
 #include <QGridLayout>
+#include <QDir>
+#include <QPluginLoader>
 #include "managerwindow.h"
+#include "echo.h"
 
 namespace Ui {
 class TopWindow;
@@ -20,12 +23,14 @@ public:
 private slots:
     void managerOpen();
     void exit();
-    void tapText();
+    void sendEcho();
 
 private:
     Ui::TopWindow* ui;
     ManagerWindow* mw;
+    EchoInterface* echoInterface;
     void createActionsName();
+    bool loadPlugin();
 };
 
 #endif // TOPWINDOW_H
