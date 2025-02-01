@@ -17,8 +17,6 @@ set(PROJECT_SOURCES
         managerwindow.cpp
         managerwindow.h
         managerwindow.ui
-
-
 )
 
 
@@ -28,6 +26,8 @@ add_executable(AGL-Manager
 
 
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
+
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
