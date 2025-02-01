@@ -154,4 +154,5 @@ void TopWindow::sendEcho()
 {
     QString text = echoInterface->echo(ui->enterText->text());
     ui->headerText->setPlainText(text);
+    ui->enterText->setText(NULL);
 }
