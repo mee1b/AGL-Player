@@ -5,6 +5,9 @@
 #include <QGridLayout>
 #include <QDir>
 #include <QPluginLoader>
+#include <QMessageBox>
+#include <QLineEdit>
+#include <QEvent>
 #include "managerwindow.h"
 #include "echo.h"
 
@@ -19,6 +22,7 @@ class TopWindow : public QMainWindow
 public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
+    QVector<QString> namePlugin;
 
 private slots:
     void managerOpen();
@@ -29,6 +33,7 @@ private:
     Ui::TopWindow* ui;
     ManagerWindow* mw;
     EchoInterface* echoInterface;
+    void keyPressEvent(QKeyEvent *ev);
     void createActionsName();
     bool loadPlugin();
 };

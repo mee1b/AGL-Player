@@ -1,7 +1,6 @@
 #include "topwindow.h"
 #include "ui_topwindow.h"
-#include <QMessageBox>
-#include <QLineEdit>
+
 
 TopWindow::TopWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,6 +11,7 @@ TopWindow::TopWindow(QWidget *parent)
     setMinimumSize(781, 491);
     ui->headerText->setReadOnly(true);
     connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
+
 
     createActionsName();
     if(!loadPlugin())
@@ -126,6 +126,7 @@ bool TopWindow::loadPlugin()
     const QStringList entries = pluginsDir.entryList(QDir::Files);
     for (const QString& fileName : entries)
     {
+        namePlugin.push_back(fileName);
         QPluginLoader pluginLoad(pluginsDir.absoluteFilePath(fileName));
         QObject* plugin = pluginLoad.instance();
         if(plugin)
@@ -154,5 +155,12 @@ void TopWindow::sendEcho()
 {
     QString text = echoInterface->echo(ui->enterText->text());
     ui->headerText->setPlainText(text);
-    ui->enterText->setText(NULL);
+    ui->enterText->clear();
+    ui->headerText->setFocus();
+}
+
+void TopWindow::keyPressEvent(QKeyEvent *ev)
+{
+    if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter)) ui->headerText->setFocus();
+    else ui->enterText->setFocus();
 }

@@ -1,8 +1,6 @@
 #include "managerwindow.h"
+#include "topwindow.h"
 #include "./ui_managerwindow.h"
-#include <QShortcut>
-#include <QMessageBox>
-
 
 ManagerWindow::ManagerWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,24 +8,19 @@ ManagerWindow::ManagerWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->statusBar()->setSizeGripEnabled(false);
+    TopWindow* topWindow = new TopWindow;
     setFixedSize(700, 400);
     setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
 
-
-
-    //таблица 1
-    ui->listWidget_2->addItem(tableName);
-    ui->listWidget_2->addItem(tableName_2);
-
-     //таблица 2
-
-    ui->listWidget->addItem(tableName);
-    ui->listWidget->addItem(tableName_2);
-
-
+    //таблица 1, 2
+    for(auto plugin : topWindow->namePlugin)
+    {
+        ui->listWidget->addItem(plugin);
+        ui->listWidget_2->addItem(plugin);
+    }
 
     // свич табы
     ui->tabWidget->setTabText(0, "Установленные игры");
@@ -72,3 +65,7 @@ void ManagerWindow::on_pushButton_4_clicked()
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
+void ManagerWindow::keyPressEvent(QKeyEvent* event)
+{
+    if(event->key() == Qt::Key_Escape) close();
+}

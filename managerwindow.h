@@ -3,6 +3,10 @@
 
 #include <QMainWindow>
 #include <QShortcut>
+#include <QShortcut>
+#include <QMessageBox>
+#include <QKeyEvent>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,7 +33,7 @@ private slots:
 
 private:
     Ui::ManagerWindow *ui;
-    QString tableName = {"Маленькие зомби-котики Пушкин Доступна Можно играть 1.0.0 150 Мбит зомби 27.11.2024"};
-    QString tableName_2 = {"Картошка Маленький автор Доступна Можно играть 5.0.1 12 Мбит Картошка 27.11.2024"};
+    void keyPressEvent(QKeyEvent* event);
+
 };
 #endif // MANAGERWINDOW_H
