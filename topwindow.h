@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QEvent>
+#include <QtTest/QtTest>
 #include "managerwindow.h"
 #include "echo.h"
 
@@ -22,7 +23,10 @@ class TopWindow : public QMainWindow
 public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
-    QVector<QString> namePlugin;
+    QVector<QString> namePlugin{};
+
+public slots:
+    void gameEcho();
 
 private slots:
     void managerOpen();

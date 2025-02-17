@@ -10,19 +10,27 @@ TopWindow::TopWindow(QWidget *parent)
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->setReadOnly(true);
-    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
 
+    mw = new ManagerWindow;
+    mw->show();
 
     createActionsName();
     if(!loadPlugin())
     {
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
     }
+    connect(mw, &ManagerWindow::startEchoGame, this, &TopWindow::gameEcho);
 }
 
 TopWindow::~TopWindow()
 {
     delete ui;
+}
+
+void TopWindow::gameEcho()
+{
+    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
+    ui->headerText->setText(tr("Добро пожаловать в игру \"Эхо\""));
 }
 
 void TopWindow::createActionsName()
@@ -118,12 +126,11 @@ void TopWindow::createActionsName()
 bool TopWindow::loadPlugin()
 {
     QDir pluginsDir(QCoreApplication::applicationDirPath());
-    if(pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Debug" || pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Release")
-        pluginsDir.cdUp();
 
     pluginsDir.cd("plugins");
     pluginsDir.cd("echo");
-    const QStringList entries = pluginsDir.entryList(QDir::Files);
+    pluginsDir.setNameFilters(QStringList() << "*.dll");
+    const QStringList entries = pluginsDir.entryList();
     for (const QString& fileName : entries)
     {
         namePlugin.push_back(fileName);
@@ -157,6 +164,7 @@ void TopWindow::sendEcho()
     ui->headerText->setPlainText(text);
     ui->enterText->clear();
     ui->headerText->setFocus();
+    QTest::keyPress(ui->headerText, Qt::Key_Insert, Qt::KeyboardModifiers{Qt::Key_Up}, 0);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)

@@ -14,6 +14,8 @@ class ManagerWindow;
 }
 QT_END_NAMESPACE
 
+class TopWindow;
+
 class ManagerWindow : public QMainWindow
 {
     Q_OBJECT
@@ -21,6 +23,9 @@ class ManagerWindow : public QMainWindow
 public:
     ManagerWindow(QWidget *parent = nullptr);
     ~ManagerWindow();
+
+signals:
+    void startEchoGame();
 
 private slots:
     void on_pushButton_clicked();
@@ -33,6 +38,7 @@ private slots:
 
 private:
     Ui::ManagerWindow *ui;
+    TopWindow* topWindow;
     void keyPressEvent(QKeyEvent* event);
 
 };
