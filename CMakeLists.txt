@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -22,7 +23,8 @@ set(PROJECT_SOURCES
 
 add_executable(AGL-Manager
     ${PROJECT_SOURCES}
-    topwindow.h topwindow.cpp topwindow.ui)
+    topwindow.h topwindow.cpp topwindow.ui
+)
 
 add_subdirectory(plugins)
 target_include_directories(AGL-Manager PRIVATE plugins/echo)
@@ -35,8 +37,8 @@ if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
 endif()
 target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_MY_LIB})
 
-
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Test)
 
 
 

@@ -157,6 +157,7 @@ void TopWindow::sendEcho()
     ui->headerText->setPlainText(text);
     ui->enterText->clear();
     ui->headerText->setFocus();
+    QTest::keyPress(ui->headerText, Qt::Key_Insert, Qt::KeyboardModifiers{Qt::Key_Up}, 0);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QEvent>
+#include <QTest>
 #include "managerwindow.h"
 #include "echo.h"
 
