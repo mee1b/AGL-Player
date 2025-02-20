@@ -11,15 +11,14 @@ TopWindow::TopWindow(QWidget *parent)
     setMinimumSize(781, 491);
     ui->headerText->setReadOnly(true);
 
-    mw = new ManagerWindow;
-    mw->show();
-
     createActionsName();
+
     if(!loadPlugin())
     {
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
     }
-    connect(mw, &ManagerWindow::startEchoGame, this, &TopWindow::gameEcho);
+
+    connect(this, &TopWindow::start, &TopWindow::gameEcho);
 }
 
 TopWindow::~TopWindow()

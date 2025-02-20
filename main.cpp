@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
 
     TopWindow tw;
     tw.show();
+    ManagerWindow w;
+    w.show();
 
     return a.exec();
 }

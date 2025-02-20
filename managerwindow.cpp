@@ -31,6 +31,9 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->pushButton_4->setShortcut(QKeySequence(Qt::Key_F3));
     ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_Delete));
     ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_F5));
+
+    connect(this, &ManagerWindow::startEchoGame, topWindow, &TopWindow::start);
+
 }
 
 ManagerWindow::~ManagerWindow()
@@ -42,7 +45,6 @@ ManagerWindow::~ManagerWindow()
 
 void ManagerWindow::on_pushButton_clicked()
 {
-    emit startEchoGame();
     close();
 }
 

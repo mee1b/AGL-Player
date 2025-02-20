@@ -28,6 +28,9 @@ public:
 public slots:
     void gameEcho();
 
+signals:
+    void start();
+
 private slots:
     void managerOpen();
     void exit();
