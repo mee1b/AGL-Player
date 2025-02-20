@@ -123,6 +123,7 @@ bool TopWindow::loadPlugin()
 
     pluginsDir.cd("plugins");
     pluginsDir.cd("echo");
+    pluginsDir.setNameFilters(QStringList() << "*.dll");
     const QStringList entries = pluginsDir.entryList(QDir::Files);
     for (const QString& fileName : entries)
     {
