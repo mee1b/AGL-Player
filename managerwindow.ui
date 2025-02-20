@@ -51,42 +51,6 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="1">
-         <widget class="QComboBox" name="comboBox">
-          <item>
-           <property name="text">
-            <string>Все игры</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Только доступные</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Частично доступные</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Доступные и частично доступные</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Доступные и непроверенные</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="checkBox">
-          <property name="text">
-           <string>Включая бета-версии</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
          <widget class="QListWidget" name="listWidget"/>
         </item>
        </layout>
@@ -188,8 +152,6 @@
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>listWidget_2</tabstop>
-  <tabstop>comboBox</tabstop>
-  <tabstop>checkBox</tabstop>
   <tabstop>listWidget</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>pushButton_4</tabstop>
