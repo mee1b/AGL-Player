@@ -24,6 +24,7 @@ public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
     QVector<QString> namePlugin{};
+    bool isConnected = true;
 
 public slots:
     void gameEcho();

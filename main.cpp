@@ -22,10 +22,11 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("file", "The file to open");
     parser.process(a);
 
-    TopWindow tw;
-    tw.show();
     ManagerWindow w;
     w.show();
+    TopWindow tw;
+    tw.show();
+
 
     return a.exec();
 }

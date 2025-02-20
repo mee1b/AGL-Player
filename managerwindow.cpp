@@ -15,6 +15,8 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
 
+    connect(this, &ManagerWindow::startEchoGame, &ManagerWindow::on_pushButton_clicked);
+
     //таблица 1, 2
     for(const auto& plugin : topWindow->namePlugin)
     {
@@ -32,8 +34,6 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_Delete));
     ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_F5));
 
-    connect(this, &ManagerWindow::startEchoGame, topWindow, &TopWindow::start);
-
 }
 
 ManagerWindow::~ManagerWindow()
@@ -45,7 +45,9 @@ ManagerWindow::~ManagerWindow()
 
 void ManagerWindow::on_pushButton_clicked()
 {
+    topWindow->isConnected = true;
     close();
+    qDebug() << topWindow->isConnected;
 }
 
 

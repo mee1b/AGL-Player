@@ -18,7 +18,11 @@ TopWindow::TopWindow(QWidget *parent)
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
     }
 
-    connect(this, &TopWindow::start, &TopWindow::gameEcho);
+    if(isConnected)
+    {
+        ui->headerText->setPlainText(tr("Добро пожаловать в игру \"Эхо\""));
+        connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
+    }
 }
 
 TopWindow::~TopWindow()
@@ -28,8 +32,7 @@ TopWindow::~TopWindow()
 
 void TopWindow::gameEcho()
 {
-    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
-    ui->headerText->setText(tr("Добро пожаловать в игру \"Эхо\""));
+
 }
 
 void TopWindow::createActionsName()

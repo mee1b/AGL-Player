@@ -25,7 +25,7 @@ public:
     ~ManagerWindow();
 
 signals:
-    void startEchoGame();
+    bool startEchoGame();
 
 private slots:
     void on_pushButton_clicked();
