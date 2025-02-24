@@ -24,6 +24,7 @@ public:
     ManagerWindow(QWidget *parent = nullptr);
     ~ManagerWindow();
 
+
 signals:
     bool startEchoGame();
 

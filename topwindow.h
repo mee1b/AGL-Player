@@ -24,7 +24,8 @@ public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
     QVector<QString> namePlugin{};
-    bool isConnected = true;
+
+    bool isConnected = false;
 
 public slots:
     void gameEcho();
@@ -41,9 +42,12 @@ private:
     Ui::TopWindow* ui;
     ManagerWindow* mw;
     EchoInterface* echoInterface;
-    void keyPressEvent(QKeyEvent *ev);
+    void keyPressEvent(QKeyEvent *ev) override;
     void createActionsName();
     bool loadPlugin();
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
 };
 
 #endif // TOPWINDOW_H

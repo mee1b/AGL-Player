@@ -9,7 +9,7 @@ TopWindow::TopWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
-    ui->headerText->setReadOnly(true);
+    ui->headerText->installEventFilter(this);
 
     createActionsName();
 
@@ -173,4 +173,35 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
 {
     if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter)) ui->headerText->setFocus();
     else ui->enterText->setFocus();
+}
+
+bool TopWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if(obj == ui->headerText)
+    {
+        if(event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            switch(keyEvent->key())
+            {
+            case Qt::Key_Up:
+                return false;
+                break;
+            case Qt::Key_Down:
+                return false;
+                break;
+            case Qt::Key_Left:
+                return false;
+                break;
+            case Qt::Key_Right:
+                return false;
+                break;
+            default:
+                TopWindow::keyPressEvent(keyEvent);
+                return true;
+                break;
+            }
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }

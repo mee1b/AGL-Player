@@ -47,7 +47,6 @@ void ManagerWindow::on_pushButton_clicked()
 {
     topWindow->isConnected = true;
     close();
-    qDebug() << topWindow->isConnected;
 }
 
 
