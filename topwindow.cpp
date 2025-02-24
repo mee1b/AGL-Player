@@ -9,20 +9,30 @@ TopWindow::TopWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
-    ui->headerText->setReadOnly(true);
-    connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
-
+    ui->headerText->installEventFilter(this);
 
     createActionsName();
+
     if(!loadPlugin())
     {
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
+    }
+
+    if(isConnected)
+    {
+        ui->headerText->setPlainText(tr("Добро пожаловать в игру \"Эхо\""));
+        connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
     }
 }
 
 TopWindow::~TopWindow()
 {
     delete ui;
+}
+
+void TopWindow::gameEcho()
+{
+
 }
 
 void TopWindow::createActionsName()
@@ -118,13 +128,15 @@ void TopWindow::createActionsName()
 bool TopWindow::loadPlugin()
 {
     QDir pluginsDir(QCoreApplication::applicationDirPath());
-    if(pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Debug" || pluginsDir.dirName().toLower() == "Desktop_Qt_6_8_0_MinGW_64_bit-Release")
-        pluginsDir.cdUp();
 
     pluginsDir.cd("plugins");
     pluginsDir.cd("echo");
     pluginsDir.setNameFilters(QStringList() << "*.dll");
+<<<<<<< HEAD
     const QStringList entries = pluginsDir.entryList(QDir::Files);
+=======
+    const QStringList entries = pluginsDir.entryList();
+>>>>>>> error_game_start
     for (const QString& fileName : entries)
     {
         namePlugin.push_back(fileName);
@@ -165,4 +177,35 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
 {
     if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter)) ui->headerText->setFocus();
     else ui->enterText->setFocus();
+}
+
+bool TopWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if(obj == ui->headerText)
+    {
+        if(event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            switch(keyEvent->key())
+            {
+            case Qt::Key_Up:
+                return false;
+                break;
+            case Qt::Key_Down:
+                return false;
+                break;
+            case Qt::Key_Left:
+                return false;
+                break;
+            case Qt::Key_Right:
+                return false;
+                break;
+            default:
+                TopWindow::keyPressEvent(keyEvent);
+                return true;
+                break;
+            }
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }

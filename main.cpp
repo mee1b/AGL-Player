@@ -1,4 +1,3 @@
-#include "managerwindow.h"
 #include "topwindow.h"
 
 #include <Windows.h>
@@ -27,6 +26,10 @@ int main(int argc, char *argv[])
     w.show();
     TopWindow tw;
     tw.show();
+<<<<<<< HEAD
+=======
+
+>>>>>>> error_game_start
 
     return a.exec();
 }

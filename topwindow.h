@@ -8,7 +8,11 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QEvent>
+<<<<<<< HEAD
 #include <QTest>
+=======
+#include <QtTest/QtTest>
+>>>>>>> error_game_start
 #include "managerwindow.h"
 #include "echo.h"
 
@@ -23,7 +27,15 @@ class TopWindow : public QMainWindow
 public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
-    QVector<QString> namePlugin;
+    QVector<QString> namePlugin{};
+
+    bool isConnected = false;
+
+public slots:
+    void gameEcho();
+
+signals:
+    void start();
 
 private slots:
     void managerOpen();
@@ -34,9 +46,12 @@ private:
     Ui::TopWindow* ui;
     ManagerWindow* mw;
     EchoInterface* echoInterface;
-    void keyPressEvent(QKeyEvent *ev);
+    void keyPressEvent(QKeyEvent *ev) override;
     void createActionsName();
     bool loadPlugin();
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
 };
 
 #endif // TOPWINDOW_H
