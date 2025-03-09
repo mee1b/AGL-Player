@@ -8,11 +8,7 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QEvent>
-<<<<<<< HEAD
-#include <QTest>
-=======
-#include <QtTest/QtTest>
->>>>>>> error_game_start
+#include <QString>
 #include "managerwindow.h"
 #include "echo.h"
 
@@ -29,10 +25,8 @@ public:
     ~TopWindow();
     QVector<QString> namePlugin{};
 
-    bool isConnected = false;
-
 public slots:
-    void gameEcho();
+    void startGame();
 
 signals:
     void start();

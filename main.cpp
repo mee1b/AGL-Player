@@ -24,12 +24,6 @@ int main(int argc, char *argv[])
 
     ManagerWindow w;
     w.show();
-    TopWindow tw;
-    tw.show();
-<<<<<<< HEAD
-=======
-
->>>>>>> error_game_start
 
     return a.exec();
 }

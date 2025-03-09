@@ -18,11 +18,6 @@ TopWindow::TopWindow(QWidget *parent)
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
     }
 
-    if(isConnected)
-    {
-        ui->headerText->setPlainText(tr("Добро пожаловать в игру \"Эхо\""));
-        connect(ui->enterText, SIGNAL(returnPressed()), SLOT(sendEcho()));
-    }
 }
 
 TopWindow::~TopWindow()
@@ -30,9 +25,11 @@ TopWindow::~TopWindow()
     delete ui;
 }
 
-void TopWindow::gameEcho()
+void TopWindow::startGame()
 {
-
+    ui->headerText->setPlainText(tr("Добро пожаловать в игру \"Эхо\""));
+    ui->enterText->setFocus();
+    connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
 }
 
 void TopWindow::createActionsName()
@@ -132,11 +129,7 @@ bool TopWindow::loadPlugin()
     pluginsDir.cd("plugins");
     pluginsDir.cd("echo");
     pluginsDir.setNameFilters(QStringList() << "*.dll");
-<<<<<<< HEAD
-    const QStringList entries = pluginsDir.entryList(QDir::Files);
-=======
     const QStringList entries = pluginsDir.entryList();
->>>>>>> error_game_start
     for (const QString& fileName : entries)
     {
         namePlugin.push_back(fileName);
@@ -169,8 +162,6 @@ void TopWindow::sendEcho()
     QString text = echoInterface->echo(ui->enterText->text());
     ui->headerText->setPlainText(text);
     ui->enterText->clear();
-    ui->headerText->setFocus();
-    QTest::keyPress(ui->headerText, Qt::Key_Insert, Qt::KeyboardModifiers{Qt::Key_Up}, 0);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)
@@ -209,3 +200,4 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
     }
     return QMainWindow::eventFilter(obj, event);
 }
+

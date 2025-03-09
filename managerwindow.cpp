@@ -8,14 +8,17 @@ ManagerWindow::ManagerWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->statusBar()->setSizeGripEnabled(false);
-    topWindow = new TopWindow;
+    if(topWindow == nullptr)
+    {
+        topWindow = new TopWindow;
+        topWindow->show();
+    }
+    connect(this, &ManagerWindow::startEchoGame, topWindow, &TopWindow::startGame);
     setFixedSize(700, 400);
     setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
-
-    connect(this, &ManagerWindow::startEchoGame, &ManagerWindow::on_pushButton_clicked);
 
     //таблица 1, 2
     for(const auto& plugin : topWindow->namePlugin)
@@ -34,6 +37,7 @@ ManagerWindow::ManagerWindow(QWidget *parent)
     ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_Delete));
     ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_F5));
 
+    connect(ui->pushButton, &QAbstractButton::clicked, this, &ManagerWindow::onPushEcho);
 }
 
 ManagerWindow::~ManagerWindow()
@@ -43,9 +47,9 @@ ManagerWindow::~ManagerWindow()
 
 
 
-void ManagerWindow::on_pushButton_clicked()
+void ManagerWindow::onPushEcho()
 {
-    topWindow->isConnected = true;
+    emit startEchoGame();
     close();
 }
 

@@ -6,6 +6,7 @@
 #include <QShortcut>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QDialog>
 
 
 QT_BEGIN_NAMESPACE
@@ -24,12 +25,13 @@ public:
     ManagerWindow(QWidget *parent = nullptr);
     ~ManagerWindow();
 
+public slots:
+    void onPushEcho();
 
 signals:
-    bool startEchoGame();
+    void startEchoGame();
 
 private slots:
-    void on_pushButton_clicked();
 
     void on_pushButton_2_clicked();
 
@@ -39,7 +41,7 @@ private slots:
 
 private:
     Ui::ManagerWindow *ui;
-    TopWindow* topWindow;
+    TopWindow* topWindow = nullptr;
     void keyPressEvent(QKeyEvent* event);
 
 };
