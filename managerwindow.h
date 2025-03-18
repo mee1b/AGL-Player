@@ -1,7 +1,7 @@
 #ifndef MANAGERWINDOW_H
 #define MANAGERWINDOW_H
 
-#include <QMainWindow>
+#include <QWidget>
 #include <QShortcut>
 #include <QShortcut>
 #include <QMessageBox>
@@ -17,7 +17,7 @@ QT_END_NAMESPACE
 
 class TopWindow;
 
-class ManagerWindow : public QMainWindow
+class ManagerWindow : public QWidget
 {
     Q_OBJECT
 
@@ -41,7 +41,6 @@ private slots:
 
 private:
     Ui::ManagerWindow *ui;
-    TopWindow* topWindow = nullptr;
     void keyPressEvent(QKeyEvent* event);
 
 };

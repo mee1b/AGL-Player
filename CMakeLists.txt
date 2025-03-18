@@ -24,6 +24,7 @@ set(PROJECT_SOURCES
 add_executable(AGL-Manager
     ${PROJECT_SOURCES}
     topwindow.h topwindow.cpp topwindow.ui
+    manager.h manager.cpp manager.ui
 )
 
 add_subdirectory(plugins)

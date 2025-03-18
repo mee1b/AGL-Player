@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QEvent>
 #include <QString>
+#include <QTest>
 #include "managerwindow.h"
 #include "echo.h"
 

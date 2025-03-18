@@ -1,13 +1,18 @@
 #include "topwindow.h"
 #include "ui_topwindow.h"
 
+/*Итого: работа с вводом через задержку.
+ * Ввели команду, очистили поле вывода, перемести курсор на поле вывода,
+ * подождали 100-200 МС, вывели результат.
+ * Можно порядок под Второй вариант через qtest.
+ * Затем сигналы-слоты, потом футболиста тащим*/
 
 TopWindow::TopWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TopWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("AGL-Manager");
+    setWindowTitle("AGL-Manager v3");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
 
@@ -160,8 +165,13 @@ void TopWindow::exit()
 void TopWindow::sendEcho()
 {
     QString text = echoInterface->echo(ui->enterText->text());
-    ui->headerText->setPlainText(text);
+    ui->headerText->clear();
     ui->enterText->clear();
+    ui->headerText->setFocus();
+    QTest::qWait(200);
+    ui->headerText->setPlainText(text);
+    QTest::qWait(100);
+    QTest::keyClick(ui->headerText, Qt::Key_Up);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)

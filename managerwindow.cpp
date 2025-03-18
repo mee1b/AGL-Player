@@ -3,19 +3,16 @@
 #include "topwindow.h"
 
 ManagerWindow::ManagerWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QWidget(parent)
     , ui(new Ui::ManagerWindow)
 {
     ui->setupUi(this);
     this->statusBar()->setSizeGripEnabled(false);
-    if(topWindow == nullptr)
-    {
-        topWindow = new TopWindow;
-        topWindow->show();
-    }
-    connect(this, &ManagerWindow::startEchoGame, topWindow, &TopWindow::startGame);
+    topWindow = new TopWindow;
+    topWindow->show();
+    connect(this, &ManagerWindow::startEchoGame, topWindow, &TopWindow::startGame); // менеджер чистый объект, без зависимостей, только от QObject, переписать!!!!
     setFixedSize(700, 400);
-    setWindowTitle("Менеджер игр");
+    setWindowTitle("Менеджер игр v3");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
