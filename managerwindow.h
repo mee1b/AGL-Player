@@ -1,7 +1,7 @@
 #ifndef MANAGERWINDOW_H
 #define MANAGERWINDOW_H
 
-#include <QWidget>
+#include <QMainWindow>
 #include <QShortcut>
 #include <QShortcut>
 #include <QMessageBox>
@@ -17,7 +17,7 @@ QT_END_NAMESPACE
 
 class TopWindow;
 
-class ManagerWindow : public QWidget
+class ManagerWindow : public QMainWindow
 {
     Q_OBJECT
 

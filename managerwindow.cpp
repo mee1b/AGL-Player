@@ -3,7 +3,7 @@
 #include "topwindow.h"
 
 ManagerWindow::ManagerWindow(QWidget *parent)
-    : QWidget(parent)
+    : QMainWindow(parent)
     , ui(new Ui::ManagerWindow)
 {
     ui->setupUi(this);
