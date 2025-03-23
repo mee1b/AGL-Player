@@ -6,19 +6,11 @@ Manager::Manager(QWidget *parent)
     , ui(new Ui::Manager)
 {
     ui->setupUi(this);
-    this->statusBar()->setSizeGripEnabled(false);
-    setFixedSize(700, 400);
-    setWindowTitle("Менеджер игр v3");
+    setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
 
-    //таблица 1, 2
-    for(const auto& plugin : topWindow->namePlugin)
-    {
-        ui->listWidget->addItem(plugin);
-        ui->listWidget_2->addItem(plugin);
-    }
 
     // свич табы
     ui->tabWidget->setTabText(0, "Установленные игры");
@@ -29,8 +21,6 @@ Manager::Manager(QWidget *parent)
     ui->pushButton_4->setShortcut(QKeySequence(Qt::Key_F3));
     ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_Delete));
     ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_F5));
-
-    connect(ui->pushButton, &QAbstractButton::clicked, this, &Manager::onPushEcho);
 }
 
 Manager::~Manager()
@@ -38,24 +28,25 @@ Manager::~Manager()
     delete ui;
 }
 
-
-
-void Manager::onPushEcho()
+void Manager::updateLists()
 {
-    emit startEchoGame();
+    for(const auto& plugin : namePlugin)
+    {
+        ui->listWidget->addItem(plugin);
+        ui->listWidget_2->addItem(plugin);
+    }
+
+}
+
+void Manager::keyPressEvent(QKeyEvent* event)
+{
+    if(event->key() == Qt::Key_Escape) close();
+}
+
+void Manager::on_pushButton_clicked()
+{
+    emit startGame();
     close();
-}
-
-
-void Manager::on_pushButton_2_clicked()
-{
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
-}
-
-
-void Manager::on_pushButton_3_clicked()
-{
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
@@ -64,13 +55,16 @@ void Manager::on_pushButton_4_clicked()
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
-void Manager::keyPressEvent(QKeyEvent* event)
+
+
+void Manager::on_pushButton_3_clicked()
 {
-    if(event->key() == Qt::Key_Escape) close();
-}
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
-Manager::~Manager()
+
+void Manager::on_pushButton_2_clicked()
 {
-    delete ui;
+    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
+

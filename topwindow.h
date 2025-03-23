@@ -10,7 +10,7 @@
 #include <QEvent>
 #include <QString>
 #include <QTest>
-#include "managerwindow.h"
+#include "manager.h"
 #include "echo.h"
 
 namespace Ui {
@@ -24,7 +24,6 @@ class TopWindow : public QMainWindow
 public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
-    QVector<QString> namePlugin{};
 
 public slots:
     void startGame();
@@ -39,7 +38,7 @@ private slots:
 
 private:
     Ui::TopWindow* ui;
-    ManagerWindow* mw;
+    Manager* mw;
     EchoInterface* echoInterface;
     void keyPressEvent(QKeyEvent *ev) override;
     void createActionsName();

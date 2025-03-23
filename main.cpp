@@ -22,8 +22,8 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("file", "The file to open");
     parser.process(a);
 
-    ManagerWindow w;
-    w.show();
+    TopWindow tw;
+    tw.show();
 
     return a.exec();
 }

@@ -12,7 +12,8 @@ TopWindow::TopWindow(QWidget *parent)
     , ui(new Ui::TopWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("AGL-Manager v3");
+    mw = new Manager;
+    setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
 
@@ -22,6 +23,9 @@ TopWindow::TopWindow(QWidget *parent)
     {
         QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
     }
+    mw->updateLists();
+    managerOpen();
+    connect(mw, &Manager::startGame, this, &TopWindow::startGame);
 
 }
 
@@ -137,7 +141,7 @@ bool TopWindow::loadPlugin()
     const QStringList entries = pluginsDir.entryList();
     for (const QString& fileName : entries)
     {
-        namePlugin.push_back(fileName);
+        mw->namePlugin.push_back(fileName);
         QPluginLoader pluginLoad(pluginsDir.absoluteFilePath(fileName));
         QObject* plugin = pluginLoad.instance();
         if(plugin)
@@ -153,7 +157,6 @@ bool TopWindow::loadPlugin()
 
 void TopWindow::managerOpen()
 {
-    mw = new ManagerWindow;
     mw->show();
 }
 

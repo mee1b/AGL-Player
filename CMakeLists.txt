@@ -15,9 +15,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
 
 set(PROJECT_SOURCES
         main.cpp
-        managerwindow.cpp
-        managerwindow.h
-        managerwindow.ui
 )
 
 
