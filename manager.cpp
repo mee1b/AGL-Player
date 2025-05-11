@@ -6,7 +6,7 @@ Manager::Manager(QWidget *parent)
     , ui(new Ui::Manager)
 {
     ui->setupUi(this);
-    setWindowTitle("Менеджер игр");
+    setWindowTitle("Менеджер игр v6");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);

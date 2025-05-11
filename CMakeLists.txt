@@ -25,6 +25,7 @@ add_executable(AGL-Manager
 )
 
 add_subdirectory(plugins)
+
 target_include_directories(AGL-Manager PRIVATE plugins/echo)
 find_path(ECHO_INCLUDE_DIR echo.h)
 find_library(ECHO_LIBRARY libecho.dll)
@@ -34,6 +35,16 @@ if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
     set(PATH_TO_MY_LIB ${PATH_TO_MY_LIB} ${ECHO_LIBRARY})
 endif()
 target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_MY_LIB})
+
+target_include_directories(AGL-Manager PRIVATE plugins/plugBasketball)
+find_path(BASK_INCLUDE_DIR basketball.h)
+find_library(BASK_LIBRARY libplugBasketball.dll)
+if (BASK_INCLUDE_DIR AND BASK_LIBRARY)
+    set(BASK_FOUND TRUE)
+    include_directories(${BASK_INCLUDE_DIR})
+    set(PATH_TO_BASK_LIB ${PATH_TO_BASK_LIB} ${BASK_LIBRARY})
+endif()
+target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_BASK_LIB})
 
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Test)

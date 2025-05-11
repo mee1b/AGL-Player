@@ -1,11 +1,6 @@
 #include "topwindow.h"
 #include "ui_topwindow.h"
 
-/*Итого: работа с вводом через задержку.
- * Ввели команду, очистили поле вывода, перемести курсор на поле вывода,
- * подождали 100-200 МС, вывели результат.
- * Можно порядок под Второй вариант через qtest.
- * Затем сигналы-слоты, потом футболиста тащим*/
 
 TopWindow::TopWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -13,7 +8,8 @@ TopWindow::TopWindow(QWidget *parent)
 {
     ui->setupUi(this);
     mw = new Manager;
-    setWindowTitle("AGL-Manager");
+    bsks = new Basketball;
+    setWindowTitle("AGL-Manager v6");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
 
@@ -25,7 +21,8 @@ TopWindow::TopWindow(QWidget *parent)
     }
     mw->updateLists();
     managerOpen();
-    connect(mw, &Manager::startGame, this, &TopWindow::startGame);
+    connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+    // connect(mw, &Manager::startGame, this, &TopWindow::startGame);
 
 }
 
@@ -36,7 +33,7 @@ TopWindow::~TopWindow()
 
 void TopWindow::startGame()
 {
-    ui->headerText->setPlainText(tr("Добро пожаловать в игру \"Эхо\""));
+    ui->headerText->setPlainText(tr(">Добро пожаловать в игру \"Эхо\""));
     ui->enterText->setFocus();
     connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
 }
@@ -167,20 +164,28 @@ void TopWindow::exit()
 
 void TopWindow::sendEcho()
 {
-    QString text = echoInterface->echo(ui->enterText->text());
-    ui->headerText->clear();
-    ui->enterText->clear();
-    ui->headerText->setFocus();
-    QTest::qWait(200);
-    ui->headerText->setPlainText(text);
-    QTest::qWait(100);
-    QTest::keyClick(ui->headerText, Qt::Key_Up);
+    ui->headerText->setPlainText(bsks->printGame());
+    // QString text = ">" + echoInterface->echo(ui->enterText->text());
+    // ui->headerText->clear();
+    // ui->enterText->clear();
+    // ui->headerText->setFocus();
+    // ui->headerText->setPlainText(text);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)
 {
-    if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter)) ui->headerText->setFocus();
-    else ui->enterText->setFocus();
+    if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter))
+    {
+        ui->headerText->setFocus();
+        QTest::qWait(100);
+        QTest::keyClick(ui->headerText, Qt::Key_Up);
+
+    }
+    else
+    {
+        QTest::keyClick(ui->enterText, ev->key());
+        ui->enterText->setFocus();
+    }
 }
 
 bool TopWindow::eventFilter(QObject *obj, QEvent *event)
@@ -202,6 +207,12 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
                 return false;
                 break;
             case Qt::Key_Right:
+                return false;
+                break;
+            case Qt::CTRL:
+                return false;
+                break;
+            case Qt::Key_Home:
                 return false;
                 break;
             default:

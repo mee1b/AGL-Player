@@ -12,6 +12,7 @@
 #include <QTest>
 #include "manager.h"
 #include "echo.h"
+#include "basketball.h"
 
 namespace Ui {
 class TopWindow;
@@ -40,6 +41,7 @@ private:
     Ui::TopWindow* ui;
     Manager* mw;
     EchoInterface* echoInterface;
+    Basketball* bsks;
     void keyPressEvent(QKeyEvent *ev) override;
     void createActionsName();
     bool loadPlugin();
