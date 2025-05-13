@@ -1,9 +1,18 @@
 #include "echo.h"
 
-QString PluginEcho::echo(const QString &message)
+QString PluginEcho::gameInput(const QString &playerChoice)
 {
-    QString add = "Вы написали: ";
-    QString nothing = "Вы ничего не написали!";
-    if(message == "") return nothing;
-    else return add + message;
+    checkQuit = playerChoice;
+    if(playerChoice == "") return nothing;
+    else return add + playerChoice;
+}
+
+QString PluginEcho::startMessage() const
+{
+    return welcome;
+}
+
+bool PluginEcho::isOver() const
+{
+    return quit.toLower() == checkQuit.toLower();
 }

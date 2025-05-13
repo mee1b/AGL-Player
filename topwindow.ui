@@ -20,10 +20,14 @@
       <property name="font">
        <font>
         <pointsize>12</pointsize>
+        <stylestrategy>PreferAntialias</stylestrategy>
        </font>
       </property>
+      <property name="readOnly">
+       <bool>false</bool>
+      </property>
       <property name="plainText">
-       <string>Краткая справка:
+       <string>&gt;Краткая справка:
 Для начала новой игры из библиотеки нажмите CTRL+M и выберите игру и нажмите ENTER.
 Если вы скачали игру, которой нет в библиотеке, то нажмите CTRL+N и выберите архив с игрой.
 Для того чтобы играть выберите пункт в одном из списков - объекты, инвентарь, пути и нажмите клавишу ENTER.

@@ -8,10 +8,11 @@ TopWindow::TopWindow(QWidget *parent)
 {
     ui->setupUi(this);
     mw = new Manager;
-    bsks = new Basketball;
+    // bsks = new Basketball;
     setWindowTitle("AGL-Manager v6");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
+    ui->headerText->isReadOnly();
 
     createActionsName();
 
@@ -21,8 +22,8 @@ TopWindow::TopWindow(QWidget *parent)
     }
     mw->updateLists();
     managerOpen();
-    connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
-    // connect(mw, &Manager::startGame, this, &TopWindow::startGame);
+    // connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+    connect(mw, &Manager::startGame, this, &TopWindow::startGameEcho);
 
 }
 
@@ -31,9 +32,9 @@ TopWindow::~TopWindow()
     delete ui;
 }
 
-void TopWindow::startGame()
+void TopWindow::startGameEcho()
 {
-    ui->headerText->setPlainText(tr(">Добро пожаловать в игру \"Эхо\""));
+    ui->headerText->setPlainText(echoInterface->startMessage());
     ui->enterText->setFocus();
     connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
 }
@@ -164,12 +165,23 @@ void TopWindow::exit()
 
 void TopWindow::sendEcho()
 {
-    ui->headerText->setPlainText(bsks->printGame());
-    // QString text = ">" + echoInterface->echo(ui->enterText->text());
-    // ui->headerText->clear();
-    // ui->enterText->clear();
-    // ui->headerText->setFocus();
-    // ui->headerText->setPlainText(text);
+    // ui->headerText->setPlainText(bsks->printGame());
+    QString text = echoInterface->gameInput(ui->enterText->text());
+    ui->enterText->clear();
+
+    if(echoInterface->isOver())
+    {
+        QMessageBox::information(this, "End game", tr("Спасибо за игру!"));
+        ui->headerText->setPlainText(reference);
+        ui->enterText->clear();
+        disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+        return;
+    }
+
+
+    ui->headerText->clear();
+    ui->headerText->setFocus();
+    ui->headerText->setPlainText(text);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)
@@ -177,9 +189,10 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
     if((ev->key() == Qt::Key_Return) || (ev->key() == Qt::Key_Enter))
     {
         ui->headerText->setFocus();
-        QTest::qWait(100);
-        QTest::keyClick(ui->headerText, Qt::Key_Up);
-
+    }
+    else if(ev->key() == Qt::Key_Tab || ev->key() == Qt::Key_Backspace || ev->key() == Qt::Key_Insert || ev->key() == Qt::Key_Delete)
+    {
+        ui->enterText->setFocus();
     }
     else
     {

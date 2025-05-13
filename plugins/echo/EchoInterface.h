@@ -8,7 +8,12 @@ class EchoInterface
 {
 public :
     virtual ~EchoInterface() = default;
-    virtual QString echo(const QString& message) = 0;
+    //привественное сообщение при включении игры
+    virtual QString startMessage() const = 0;
+    //обработать команду пользователя и выдать новый текст
+    virtual QString gameInput(const QString& playerChoice) = 0;
+    //проверить, закончена игра или нет
+    virtual bool isOver()const = 0;
 };
 
 #define EchoInterface_iid "ru.echo.EchoInterface"
