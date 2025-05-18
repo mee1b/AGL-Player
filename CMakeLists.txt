@@ -22,7 +22,9 @@ add_executable(AGL-Manager
     ${PROJECT_SOURCES}
     topwindow.h topwindow.cpp topwindow.ui
     manager.h manager.cpp manager.ui
+    GameInterface.h
 )
+
 
 add_subdirectory(plugins)
 
@@ -36,15 +38,15 @@ if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
 endif()
 target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_MY_LIB})
 
-# target_include_directories(AGL-Manager PRIVATE plugins/plugBasketball)
-# find_path(BASK_INCLUDE_DIR basketball.h)
-# find_library(BASK_LIBRARY libplugBasketball.dll)
-# if (BASK_INCLUDE_DIR AND BASK_LIBRARY)
-#     set(BASK_FOUND TRUE)
-#     include_directories(${BASK_INCLUDE_DIR})
-#     set(PATH_TO_BASK_LIB ${PATH_TO_BASK_LIB} ${BASK_LIBRARY})
-# endif()
-# target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_BASK_LIB})
+target_include_directories(AGL-Manager PRIVATE plugins/Basketball)
+find_path(BASKETBALL_INCLUDE_DIR basketball.h)
+find_library(BASKETBALL_LIBRARY libBasketball.dll)
+if (BASKETBALL_INCLUDE_DIR AND BASKETBALL_LIBRARY)
+    set(BASK_FOUND TRUE)
+    include_directories(${BASKETBALL_INCLUDE_DIR})
+    set(PATH_TO_BASKETBALL_LIB ${PATH_TO_BASKETBALL_LIB} ${BASKETBALL_LIBRARY})
+endif()
+target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_BASKETBALL_LIB})
 
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Test)

@@ -6,7 +6,7 @@ Manager::Manager(QWidget *parent)
     , ui(new Ui::Manager)
 {
     ui->setupUi(this);
-    setWindowTitle("Менеджер игр v6");
+    setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
@@ -32,10 +32,15 @@ void Manager::updateLists()
 {
     for(const auto& plugin : namePlugin)
     {
-        ui->listWidget->addItem(plugin);
-        ui->listWidget_2->addItem(plugin);
+        ui->plugList->addItem(plugin);
+        ui->plugList_2->addItem(plugin);
     }
 
+}
+
+QListWidget *Manager::getPlugList() const
+{
+    return ui->plugList;
 }
 
 void Manager::keyPressEvent(QKeyEvent* event)
@@ -45,7 +50,8 @@ void Manager::keyPressEvent(QKeyEvent* event)
 
 void Manager::on_pushButton_clicked()
 {
-    emit startGame();
+    QListWidgetItem* item = ui->plugList->currentItem();
+    emit ui->plugList->itemActivated(item);
     close();
 }
 

@@ -1,14 +1,13 @@
-#ifndef ECHO_H
-#define ECHO_H
+#pragma once
 
 #include <QObject>
-#include "EchoInterface.h"
+#include "../../GameInterface.h"
 
-class PluginEcho : public QObject, EchoInterface
+class PluginEcho : public QObject, GameInterface
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID EchoInterface_iid FILE "echo.json")
-    Q_INTERFACES(EchoInterface)
+    Q_PLUGIN_METADATA(IID GameInterface_iid FILE "echo.json")
+    Q_INTERFACES(GameInterface)
 
 public:
     QString gameInput(const QString& playerChoice) override;
@@ -22,5 +21,3 @@ private:
     QString quit = "exit";
     QString checkQuit{};
 };
-
-#endif // ECHO_H

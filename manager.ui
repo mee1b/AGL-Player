@@ -128,7 +128,7 @@
     </attribute>
     <layout class="QGridLayout" name="gridLayout_2">
      <item row="0" column="0">
-      <widget class="QListWidget" name="listWidget_2"/>
+      <widget class="QListWidget" name="plugList"/>
      </item>
     </layout>
    </widget>
@@ -138,7 +138,7 @@
     </attribute>
     <layout class="QGridLayout" name="gridLayout_3">
      <item row="0" column="1">
-      <widget class="QListWidget" name="listWidget"/>
+      <widget class="QListWidget" name="plugList_2"/>
      </item>
     </layout>
    </widget>

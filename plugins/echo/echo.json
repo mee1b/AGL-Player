@@ -1,3 +1,5 @@
 {
-    "Keys" : [ "echo" ]
+    "IID": "ru.AGL-Manager.GameInterface",
+    "name": "Эхо",
+    "description": "Игра-повторитель"
 }

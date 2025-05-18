@@ -1,2 +1,2 @@
-add_subdirectory(plugBasketball)
 add_subdirectory(echo)
+add_subdirectory(Basketball)

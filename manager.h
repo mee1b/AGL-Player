@@ -1,11 +1,11 @@
-#ifndef MANAGER_H
-#define MANAGER_H
+#pragma once
 
 #include <QDialog>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QShortcut>
 #include <QWidget>
+#include <QListWidget>
 #include <QTest>
 
 namespace Ui {
@@ -24,6 +24,7 @@ public:
 
     QVector<QString> namePlugin{};
     void updateLists();
+    QListWidget* getPlugList() const;
 
 signals:
     void startGame();
@@ -42,5 +43,3 @@ private:
     TopWindow *topWindow;
     void keyPressEvent(QKeyEvent *event);
 };
-
-#endif // MANAGER_H

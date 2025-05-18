@@ -1,0 +1,57 @@
+#pragma once
+
+#include <QObject>
+#include "../../GameInterface.h"
+#include "structs.h"
+#include <random>
+
+class Basketball : public QObject, public GameInterface
+{
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID GameInterface_iid FILE "Basketball.json")
+    Q_INTERFACES(GameInterface)
+
+    std::mt19937 gen;
+    std::uniform_int_distribution<unsigned int> distrib;
+
+public:
+    explicit Basketball(QObject *parent = nullptr);
+    //привественное сообщение при включении игры
+    virtual QString startMessage() const override;
+    //обработать команду пользователя и выдать новый текст
+    virtual QString gameInput(const QString& playerChoice) override;
+    //проверить, закончена игра или нет
+    virtual bool isOver()const override;
+
+private:
+    bool gameOver = false;
+    bool blocked = false;
+    bool stealed = false;
+    Opponent opponent;
+    Player player;
+    QString outputMessage;
+    QString end = ">Игра завершена.";
+
+    enum class Step
+    {
+        Start,
+        DefenseChoice,
+        PlayerTurn,
+        OpponentTurn,
+        End
+    };
+
+    Step currentStep = Step::Start;
+    int currentShot = 0;
+    bool awaitingShotInput = true;
+
+    void choiceDefenseOpponent(int& defense);
+    void probabilityHitPlayer(int& hit, const int& teamSpirit);
+    void probabilityHitOpponent(int& hit, const int& teamSpiritOpponent);
+    void probalityStealOpponentOnPlayer(bool& steal);
+    void probalityBlockOpponentOnPlayer(bool& block);
+    QString attackShotDescription(const int& shot, const int& teamSpirit);
+    QString playerAttack(Player& player, Opponent& opponent, bool& scored);
+    void switchDefenseOpponent(const Player& player, Opponent& opponent);
+    QString opponentAttack(Player& player, Opponent& opponent, bool& scoredOpponent);
+};

@@ -1,4 +1,5 @@
 #pragma once
+
 enum class winOrLose
 {
     PLAYER_WIN,

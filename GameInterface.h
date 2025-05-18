@@ -1,13 +1,13 @@
-#ifndef ECHOINTERFACE_H
-#define ECHOINTERFACE_H
+#pragma once
 
 #include <QString>
 #include <QtPlugin>
 
-class EchoInterface
+
+class GameInterface
 {
 public :
-    virtual ~EchoInterface() = default;
+    virtual ~GameInterface() = default;
     //привественное сообщение при включении игры
     virtual QString startMessage() const = 0;
     //обработать команду пользователя и выдать новый текст
@@ -16,7 +16,5 @@ public :
     virtual bool isOver()const = 0;
 };
 
-#define EchoInterface_iid "ru.echo.EchoInterface"
-Q_DECLARE_INTERFACE(EchoInterface, EchoInterface_iid)
-
-#endif // ECHOINTERFACE_H
+#define GameInterface_iid "ru.AGL-Manager.GameInterface"
+Q_DECLARE_INTERFACE(GameInterface, GameInterface_iid)

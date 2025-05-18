@@ -8,8 +8,7 @@ TopWindow::TopWindow(QWidget *parent)
 {
     ui->setupUi(this);
     mw = new Manager;
-    // bsks = new Basketball;
-    setWindowTitle("AGL-Manager v6");
+    setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
     ui->headerText->isReadOnly();
@@ -22,8 +21,8 @@ TopWindow::TopWindow(QWidget *parent)
     }
     mw->updateLists();
     managerOpen();
-    // connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
-    connect(mw, &Manager::startGame, this, &TopWindow::startGameEcho);
+    QListWidget* pluginList = mw->getPlugList();
+    connect(pluginList, &QListWidget::itemActivated, this, &TopWindow::onPlugSelected);
 
 }
 
@@ -34,9 +33,38 @@ TopWindow::~TopWindow()
 
 void TopWindow::startGameEcho()
 {
-    ui->headerText->setPlainText(echoInterface->startMessage());
+    ui->headerText->setPlainText(gameInterface->startMessage());
     ui->enterText->setFocus();
     connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+}
+
+void TopWindow::onPlugSelected(QListWidgetItem* item)
+{
+    if(!item) return;
+
+    QString plugName = item->text();
+
+    for(int i = 0; i < mw->namePlugin.size(); ++i)
+    {
+        if(mw->namePlugin[i] == plugName)
+        {
+            gameInterface = pluginsInterface[i];
+            if(gameInterface)
+            {
+                ui->headerText->setPlainText(gameInterface->startMessage());
+                ui->enterText->setFocus();
+
+                disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+                connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+            }
+
+            else
+            {
+                QMessageBox::warning(this, "Ошибка", "Плагин не реализует GameInterface");
+            }
+            break;
+        }
+    }
 }
 
 void TopWindow::createActionsName()
@@ -132,29 +160,56 @@ void TopWindow::createActionsName()
 bool TopWindow::loadPlugin()
 {
     QDir pluginsDir(QCoreApplication::applicationDirPath());
-
+    pluginsInterface.clear();
+    pluginsLoad.clear();
     pluginsDir.cd("plugins");
-    pluginsDir.cd("echo");
-    pluginsDir.setNameFilters(QStringList() << "*.dll");
-    const QStringList entries = pluginsDir.entryList();
+    const QStringList entries = pluginsDir.entryList(QDir::Files);
     for (const QString& fileName : entries)
     {
-        mw->namePlugin.push_back(fileName);
-        QPluginLoader pluginLoad(pluginsDir.absoluteFilePath(fileName));
-        QObject* plugin = pluginLoad.instance();
-        if(plugin)
+        qDebug() << "Файл в папке plugins:" << fileName;
+        if(!fileName.endsWith(".dll", Qt::CaseInsensitive))
+            continue;
+        qDebug() << "Пробуем загрузить: " << fileName;
+        QString fullPath = pluginsDir.absoluteFilePath(fileName);
+        QPluginLoader* pluginLoad = new QPluginLoader(fullPath, this);
+        QObject* plugin = pluginLoad->instance();
+
+        QJsonObject meta = pluginLoad->metaData().value("MetaData").toObject();
+        QString displayName = meta.value("name").toString();
+        if(displayName.isEmpty())
+            displayName = fileName;
+
+        if(!plugin)
         {
-            echoInterface = qobject_cast<EchoInterface*>(plugin);
-            if(echoInterface) return true;
-            pluginLoad.unload();
+            qDebug() << "Ошибка загрузки: " << pluginLoad->errorString();
+            delete pluginLoad;
+            continue;
+        }
+
+        mw->namePlugin.push_back(displayName);
+
+        gameInterface = qobject_cast<GameInterface*>(plugin);
+        if(gameInterface)
+        {
+            pluginsLoad.push_back(pluginLoad);
+            pluginsInterface.push_back(gameInterface);
+            qDebug() << "Плагин успешно загружен: " << fileName;
+        }
+        else
+        {
+            delete pluginLoad;
+            continue;
         }
     }
 
-    return false;
+    return !pluginsLoad.isEmpty();
 }
 
 void TopWindow::managerOpen()
 {
+    ui->headerText->setPlainText(reference);
+    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+    ui->enterText->clear();
     mw->show();
 }
 
@@ -165,11 +220,12 @@ void TopWindow::exit()
 
 void TopWindow::sendEcho()
 {
-    // ui->headerText->setPlainText(bsks->printGame());
-    QString text = echoInterface->gameInput(ui->enterText->text());
+    if(!gameInterface) return;
+
+    QString text = gameInterface->gameInput(ui->enterText->text());
     ui->enterText->clear();
 
-    if(echoInterface->isOver())
+    if(gameInterface->isOver())
     {
         QMessageBox::information(this, "End game", tr("Спасибо за игру!"));
         ui->headerText->setPlainText(reference);
@@ -190,7 +246,7 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
     {
         ui->headerText->setFocus();
     }
-    else if(ev->key() == Qt::Key_Tab || ev->key() == Qt::Key_Backspace || ev->key() == Qt::Key_Insert || ev->key() == Qt::Key_Delete)
+    else if(ev->key() == Qt::Key_Tab || ev->key() == Qt::Key_Backspace || ev->key() == Qt::Key_Insert || ev->key() == Qt::Key_Delete || ev->key() == Qt::Key_Escape)
     {
         ui->enterText->setFocus();
     }
