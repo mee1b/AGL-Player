@@ -21,7 +21,7 @@ QString Basketball::gameInput(const QString &playerChoice)
 {
     outputMessage.clear();
 
-    if(playerChoice.toLower() == "exit")
+    if(playerChoice.toLower() == "выход")
     {
         gameOver = true;
         return end;
@@ -30,7 +30,7 @@ QString Basketball::gameInput(const QString &playerChoice)
         switch(currentStep)
         {
         case Step::Start:
-            if(playerChoice.toLower() == "start")
+            if(playerChoice.toLower() == "начать")
             {
                 player.name = history::PLAYER_TEAM_NAME;
                 opponent.name = history::STANDART_OPPONENT_NAME;

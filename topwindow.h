@@ -10,6 +10,7 @@
 #include <QString>
 #include <QTest>
 #include <QTimer>
+#include <QAccessible>
 #include "manager.h"
 #include "echo.h"
 #include "basketball.h"
