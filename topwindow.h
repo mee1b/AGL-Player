@@ -28,7 +28,6 @@ public:
     ~TopWindow();
 
 public slots:
-    void startGameEcho();
     void onPlugSelected(QListWidgetItem* item);
 
 private slots:
@@ -56,6 +55,8 @@ private:
         "Сохранение и загрузка игр происходит обязательно в каталоге с текущей игрой (иногда в подкаталоге autosaves,если игра сама сохраняет своё состояние), менять на другой нельзя.\n"
         "При сохранении, указывайте пожалуйста имя файла латинскими буквами или цифрами.\n"
         "Внимание! Большие архивы могут не распаковываться программой через менеджер или установку в библиотеку.\nПопробуйте самостоятельно распаковать их в папку с играми.";
+    void announceText(QWidget* widget, const QString& text);
+    void announceSetText(QWidget *widget, const QString &text);
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
 };

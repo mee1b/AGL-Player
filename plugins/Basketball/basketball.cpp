@@ -116,7 +116,6 @@ QString Basketball::gameInput(const QString &playerChoice)
             if(scored)
             {
                 outputMessage += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
-                outputMessage += "\n\nВведите любой символ для продолжения...";
                 currentStep = Step::OpponentTurn;
             }
             else
@@ -143,7 +142,6 @@ QString Basketball::gameInput(const QString &playerChoice)
             {
                 outputMessage += "\nПоздравляем! Вы победили!!!";
                 currentStep = Step::End;
-                outputMessage += "\n\nВведите любой символ для продолжения...";
                 break;
 
             }
@@ -151,7 +149,6 @@ QString Basketball::gameInput(const QString &playerChoice)
             {
                 outputMessage += "\nПобеда была близка, не расстраивайся!";
                 currentStep = Step::End;
-                outputMessage += "\n\nВведите любой символ для продолжения...";
                 break;
             }
             else
@@ -162,12 +159,12 @@ QString Basketball::gameInput(const QString &playerChoice)
             break;
         }
         case Step::End:
-            outputMessage = QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) + "\nИгра завершена.\nВведите 'start', чтобы сыграть снова, или 'exit', чтобы выйти.";
-            if (playerChoice.toLower() == "start")
+            outputMessage = QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) + "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
+            if (playerChoice.toLower() == "начать")
             {
                 currentStep = Step::Start;
             }
-            else if(playerChoice.toLower() == "exit")
+            else if(playerChoice.toLower() == "выход")
             {
                 gameOver = true;
             }

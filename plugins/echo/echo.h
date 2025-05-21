@@ -17,7 +17,7 @@ public:
 private:
     QString add = ">Вы написали: ";
     QString nothing = ">Вы ничего не написали!";
-    QString welcome = ">Добро пожаловать в игру \"ЭХО\"\nДля завершения игры введите \"exit\"";
-    QString quit = "exit";
+    QString welcome = ">Добро пожаловать в игру \"ЭХО\"\nДля завершения игры введите \"выход\"";
+    QString quit = "выход";
     QString checkQuit{};
 };

@@ -26,8 +26,6 @@ public:
     void updateLists();
     QListWidget* getPlugList() const;
 
-signals:
-    void startGame();
 
 private slots:
     void on_pushButton_clicked();

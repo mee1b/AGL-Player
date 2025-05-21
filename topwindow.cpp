@@ -1,5 +1,6 @@
 #include "topwindow.h"
 #include "ui_topwindow.h"
+#include <QAccessibleTextUpdateEvent>
 
 
 TopWindow::TopWindow(QWidget *parent)
@@ -11,6 +12,7 @@ TopWindow::TopWindow(QWidget *parent)
     ui->headerText->setAccessibleDescription("Здесь отбражается текст игры");
     ui->enterText->setAccessibleName("Поле ввода");
     ui->enterText->setAccessibleDescription("Введите команду для игры");
+    announceText(ui->headerText, reference);
     mw = new Manager;
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
@@ -36,12 +38,6 @@ TopWindow::~TopWindow()
     delete mw;
 }
 
-void TopWindow::startGameEcho()
-{
-    ui->headerText->setPlainText(">" + gameInterface->startMessage());
-    ui->enterText->setFocus();
-    connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
-}
 
 void TopWindow::onPlugSelected(QListWidgetItem* item)
 {
@@ -56,9 +52,7 @@ void TopWindow::onPlugSelected(QListWidgetItem* item)
             gameInterface = pluginsInterface[i];
             if(gameInterface)
             {
-                ui->headerText->setPlainText(gameInterface->startMessage());
-                ui->enterText->setFocus();
-
+                announceSetText(ui->headerText, gameInterface->startMessage());
                 disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
                 connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
             }
@@ -210,6 +204,49 @@ bool TopWindow::loadPlugin()
     return !pluginsLoad.isEmpty();
 }
 
+void TopWindow::announceText(QWidget *widget, const QString &text)
+{
+    int oldLength = 0;
+
+    if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
+    {
+        plain->appendPlainText(text);
+        oldLength = plain->toPlainText().length() - text.length();
+        plain->moveCursor(QTextCursor::StartOfBlock);
+    }
+    else if (auto* edit = qobject_cast<QLineEdit*>(widget))
+    {
+        edit->setText(text);
+    }
+
+    QAccessibleTextUpdateEvent ev(widget, oldLength, "", text);
+    QAccessible::updateAccessibility(&ev);
+
+    widget->setFocus();
+    QAccessibleEvent focusEvent(widget, QAccessible::Focus);
+    QAccessible::updateAccessibility(&focusEvent);
+}
+
+void TopWindow::announceSetText(QWidget *widget, const QString &text)
+{
+    if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
+    {
+        plain->setPlainText(text);
+        plain->moveCursor(QTextCursor::StartOfBlock);
+    }
+    else if (auto* edit = qobject_cast<QLineEdit*>(widget))
+    {
+        edit->setText(text);
+    }
+
+    QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+    QAccessible::updateAccessibility(&ev);
+
+    widget->setFocus();
+    QAccessibleEvent focusEvent(widget, QAccessible::Focus);
+    QAccessible::updateAccessibility(&focusEvent);
+}
+
 void TopWindow::managerOpen()
 {
     ui->headerText->setPlainText(reference);
@@ -227,28 +264,22 @@ void TopWindow::sendEcho()
 {
     if(!gameInterface) return;
 
+    announceText(ui->enterText, ui->enterText->text());
     QString text = ">" + gameInterface->gameInput(ui->enterText->text());
     ui->enterText->clear();
 
     if(gameInterface->isOver())
     {
         QMessageBox::information(this, "End game", tr("Спасибо за игру!"));
-        ui->headerText->setPlainText(reference);
-        QAccessibleTextUpdateEvent updateText(ui->headerText, 0, "", reference);
-        QAccessible::updateAccessibility(&updateText);
         ui->enterText->clear();
+        announceSetText(ui->headerText, reference);
         disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
         return;
     }
 
 
     ui->headerText->clear();
-    ui->headerText->setFocus();
-    QAccessibleEvent qaue(ui->headerText, QAccessible::Focus);
-    QAccessible::updateAccessibility(&qaue);
-    ui->headerText->setPlainText(text);
-    QAccessibleTextUpdateEvent updateText(ui->headerText, 0, "", text);
-    QAccessible::updateAccessibility(&updateText);
+    announceText(ui->headerText, text);
 }
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)
@@ -259,30 +290,26 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
         return;
     }
 
-    ui->enterText->setFocus();
-    QAccessibleEvent qae(ui->enterText, QAccessible::Focus);
-    QAccessible::updateAccessibility(&qae);
+    if (ev->key() == Qt::Key_Tab || ev->key() == Qt::Key_Backtab)
+    {
+        QMainWindow::keyPressEvent(ev);
+        return;
+    }
 
     if(ev->text().isEmpty() &&
-        ev->key() == Qt::Key_Shift ||
+        (ev->key() == Qt::Key_Shift ||
         ev->key() == Qt::Key_Control ||
         ev->key() == Qt::Key_Alt ||
-        ev->key() == Qt::Key_CapsLock)
+        ev->key() == Qt::Key_CapsLock))
     {
         return;
     }
-    else
-    {
-        QKeyEvent* newEvent = new QKeyEvent(
-            QEvent::KeyPress,
-            ev->key(),
-            ev->modifiers(),
-            ev->text(),
-            ev->isAutoRepeat(),
-            ev->count()
-            );
-        QCoreApplication::postEvent(ui->enterText, newEvent);
-    }
+
+    ui->enterText->setFocus();
+    QAccessibleEvent aEvent(ui->enterText, QAccessible::Focus);
+    QAccessible::updateAccessibility(&aEvent);
+
+    if(!ev->text().isEmpty()) ui->enterText->insert(ev->text());
 }
 
 bool TopWindow::eventFilter(QObject *obj, QEvent *event)
