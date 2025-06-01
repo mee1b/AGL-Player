@@ -13,24 +13,23 @@ Basketball::Basketball(QObject *parent)
 
 QString Basketball::startMessage() const
 {
-    QString buff = menu::WELCOME + menu::rules;
-    return buff;
+    return menu::WELCOME;
 }
 
 QString Basketball::gameInput(const QString &playerChoice)
 {
     outputMessage.clear();
 
-    if(playerChoice.toLower() == "выход")
+    QString input = playerChoice.toLower().trimmed();
+    if (input == "выход")
     {
         gameOver = true;
         return end;
     }
-
-        switch(currentStep)
+        switch (currentStep)
         {
         case Step::Start:
-            if(playerChoice.toLower() == "начать")
+            if (input == "начать")
             {
                 player.name = history::PLAYER_TEAM_NAME;
                 opponent.name = history::STANDART_OPPONENT_NAME;
@@ -39,139 +38,101 @@ QString Basketball::gameInput(const QString &playerChoice)
                 player.score = engine::ZERO;
                 opponent.score = engine::ZERO;
                 currentStep = Step::DefenseChoice;
-                outputMessage = menu::rulesDefense;
+                input.clear();
+                return menu::rulesDefense;
             }
             else
             {
-                outputMessage = menu::repeatStart;
+                return menu::repeatStart;
             }
-            break;
 
         case Step::DefenseChoice:
         {
-            int defenseChoice = playerChoice.toInt();
-            if(defenseChoice < 1 || defenseChoice > 4)
-            {
-                outputMessage = menu::REPEAT;
+            int defenseChoice = input.toInt();
+            if (defenseChoice >= 1 && defenseChoice <= 4) {
+                player.defense = defenseChoice;
+                choiceDefenseOpponent(opponent.defense);
+                currentStep = Step::PlayerRulesShot;
+                input.clear();
                 break;
             }
-            player.defense = defenseChoice;
-            choiceDefenseOpponent(opponent.defense);
-
-            outputMessage += "Введите любой символ для продолжения...";
-            currentStep = Step::PlayerTurn;
+            else
+            {
+                return menu::REPEAT;
+            }
         }
-        break;
 
-        case Step::PlayerTurn:
+        case Step::PlayerInputShot:
         {
-            bool scored = false;
-
-            if(awaitingShotInput)
+            int shot = input.toInt();
+            if (shot < 1 || shot > 4)
             {
-                outputMessage = menu::rulesShot;
-                awaitingShotInput = false;
-                break;
+                return menu::REPEAT;
             }
 
-            player.shot = playerChoice.toInt();
-            if(player.shot < 1 || player.shot > 4)
-            {
-                outputMessage = menu::REPEAT;
-                break;
-            }
-
-            outputMessage += "\n" + attackShotDescription(player.shot, player.teamSpirit);
-
+            player.shot = shot;
             QString correctShot;
-            switch(player.shot)
+
+            switch (shot)
             {
-            case 1:
-                correctShot = "Трехочковый бросок";
-                break;
-            case 2:
-                correctShot = "Двухочковый бросок";
-                break;
-            case 3:
-                correctShot = "Лэй-апп";
-                break;
-            case 4:
-                correctShot = "Комбинация";
-                break;
+            case 1: correctShot = "Трехочковый бросок"; break;
+            case 2: correctShot = "Двухочковый бросок"; break;
+            case 3: correctShot = "Лэй-апп"; break;
+            case 4: correctShot = "Комбинация"; break;
             }
 
             outputMessage = QString("Вы выбрали %1.\n").arg(correctShot);
+            outputMessage += "\n" + attackShotDescription(shot, player.teamSpirit);
 
+            bool scored = false;
             outputMessage += playerAttack(player, opponent, scored);
 
-            if(player.score >= 20)
+            if (player.score >= 20)
             {
-                outputMessage += "\nПоздравляем! Вы победили!!!";
-                outputMessage += "\n\nВведите любой символ для продолжения...";
+                outputMessage = "Поздравляем! Вы победили!!!" + QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) +
+                                "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";;
                 currentStep = Step::End;
                 break;
-
             }
 
-            if(scored)
-            {
-                outputMessage += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
-                currentStep = Step::OpponentTurn;
-            }
-            else
-            {
-                currentStep = Step::OpponentTurn;
-                awaitingShotInput = true;
-                break;
-            }
-            break;
-        }
-        case Step::OpponentTurn:
-        {
-            bool scoredOpponent = false;
-
-            outputMessage += QString("%1 в атаке!\n").arg(opponent.name);
-            outputMessage += opponentAttack(player, opponent, scoredOpponent);
-
-            if(scoredOpponent)
+            if (scored)
             {
                 outputMessage += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
             }
 
-            if(player.score >= 20)
-            {
-                outputMessage += "\nПоздравляем! Вы победили!!!";
-                currentStep = Step::End;
-                break;
-
-            }
-            else if(opponent.score >= 20)
-            {
-                outputMessage += "\nПобеда была близка, не расстраивайся!";
-                currentStep = Step::End;
-                break;
-            }
-            else
-            {
-                currentStep = Step::PlayerTurn;
-                awaitingShotInput = true;
-            }
+            currentStep = Step::OpponentTurn;
+            input.clear();
             break;
         }
+
         case Step::End:
-            outputMessage = QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) + "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
-            if (playerChoice.toLower() == "начать")
+            if (input == "начать")
             {
                 currentStep = Step::Start;
+                input.clear();
+                break;
             }
-            else if(playerChoice.toLower() == "выход")
+            else if (input == "выход")
             {
                 gameOver = true;
+                break;
             }
-            break;
-    }
+            else
+            {
+                outputMessage = "Игра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
+                return outputMessage.trimmed();
+            }
+        }
 
-    return outputMessage;
+        QString autoMessage = outputMessage;
+        while(true)
+        {
+            QString message = autoStep();
+            if(message.isEmpty())
+                break;
+            autoMessage += '\n' + message;
+        }
+        return autoMessage.trimmed();
 }
 
 bool Basketball::isOver() const
@@ -266,7 +227,7 @@ QString Basketball::playerAttack(Player& player, Opponent& opponent, bool& score
     probalityBlockOpponentOnPlayer(blocked);
     if(blocked)
     {
-        result += "Соперник блокирует бросок!\n\nВведите любой символ для продолжения...";
+        result += "Соперник блокирует бросок!";
         scored = false;
         return result;
     }
@@ -274,7 +235,7 @@ QString Basketball::playerAttack(Player& player, Opponent& opponent, bool& score
     probalityStealOpponentOnPlayer(stealed);
     if(stealed)
     {
-        result += "Соперник перехватывает мяч!\n\nВведите любой символ для продолжения...";
+        result += "Соперник перехватывает мяч!";
         scored = false;
         return result;
     }
@@ -351,11 +312,56 @@ QString Basketball::opponentAttack(Player &player, Opponent &opponent, bool& sco
     if(hit >= 55)
     {
         opponent.score += 2;
-        result += "Мяч в корзине!\n\nВведите любой символ для продолжения...";
+        result += "Мяч в корзине!";
         scoredOpponent = true;
         return result;
     }
-    result += "Это было близко, но мимо...\n\nВведите любой символ для продолжения...";
+    result += "Это было близко, но мимо...";
+    return result;
+}
+
+QString Basketball::autoStep()
+{
+    QString result;
+    switch(currentStep)
+    {
+    case Step::PlayerRulesShot:
+        result += menu::rulesShot;
+        currentStep = Step::PlayerInputShot;
+        break;
+    case Step::OpponentTurn:
+    {
+        bool scoredOpponent = false;
+        result = QString("%1 в атаке!\n").arg(opponent.name);
+        result += opponentAttack(player, opponent, scoredOpponent);
+
+        if (scoredOpponent)
+        {
+            result += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
+        }
+
+        if (player.score >= 20)
+        {
+            result += "Поздравляем! Вы победили!!!" + QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) +
+                            "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
+            currentStep = Step::End;
+            break;
+        }
+        else if (opponent.score >= 20)
+        {
+            result += "Победа была близка! Не расстраивайся!" + QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) +
+                            "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
+            currentStep = Step::End;
+            break;
+        }
+        else
+        {
+            currentStep = Step::PlayerRulesShot;
+        }
+    }
+    default:
+        break;
+    }
     return result;
 }
 

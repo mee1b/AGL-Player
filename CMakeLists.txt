@@ -17,12 +17,12 @@ set(PROJECT_SOURCES
         main.cpp
 )
 
-
 add_executable(AGL-Manager
     ${PROJECT_SOURCES}
     topwindow.h topwindow.cpp topwindow.ui
     manager.h manager.cpp manager.ui
-    GameInterface.h
+    GameInterface.h resources.qrc
+    resources.qrc
 )
 
 

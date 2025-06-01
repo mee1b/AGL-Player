@@ -36,7 +36,8 @@ private:
     {
         Start,
         DefenseChoice,
-        PlayerTurn,
+        PlayerRulesShot,
+        PlayerInputShot,
         OpponentTurn,
         End
     };
@@ -54,4 +55,5 @@ private:
     QString playerAttack(Player& player, Opponent& opponent, bool& scored);
     void switchDefenseOpponent(const Player& player, Opponent& opponent);
     QString opponentAttack(Player& player, Opponent& opponent, bool& scoredOpponent);
+    QString autoStep();
 };

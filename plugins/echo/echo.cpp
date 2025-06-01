@@ -14,5 +14,5 @@ QString PluginEcho::startMessage() const
 
 bool PluginEcho::isOver() const
 {
-    return quit.toLower() == checkQuit.toLower();
+    return quit.toLower().trimmed() == checkQuit.toLower().trimmed();
 }

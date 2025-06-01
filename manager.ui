@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="pushButton_4">
+  <widget class="QPushButton" name="b_LastSaveContin">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -47,7 +47,7 @@
     <string>Продолжить последнюю игру (F3)</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="b_StartGame">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -63,7 +63,7 @@
     <string>Играть (ENTER)</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_3">
+  <widget class="QPushButton" name="b_Updata">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -82,7 +82,7 @@
     <string>Обновить данные (F5)</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_2">
+  <widget class="QPushButton" name="b_Delete">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -98,7 +98,7 @@
     <string>Удалить (DEL)</string>
    </property>
   </widget>
-  <widget class="QTabWidget" name="tabWidget">
+  <widget class="QTabWidget" name="switchGame">
    <property name="geometry">
     <rect>
      <x>10</x>

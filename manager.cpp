@@ -13,14 +13,20 @@ Manager::Manager(QWidget *parent)
 
 
     // свич табы
-    ui->tabWidget->setTabText(0, "Установленные игры");
-    ui->tabWidget->setTabText(1, "Репозиторий игр");
+    ui->switchGame->setTabText(0, "Установленные игры");
+    ui->switchGame->setTabText(1, "Репозиторий игр");
 
     //Hot keys для кнопок
-    ui->pushButton->setShortcut(QKeySequence(Qt::Key_Return));
-    ui->pushButton_4->setShortcut(QKeySequence(Qt::Key_F3));
-    ui->pushButton_2->setShortcut(QKeySequence(Qt::Key_Delete));
-    ui->pushButton_3->setShortcut(QKeySequence(Qt::Key_F5));
+    ui->b_StartGame->setShortcut(QKeySequence(Qt::Key_Return));
+    ui->b_LastSaveContin->setShortcut(QKeySequence(Qt::Key_F3));
+    ui->b_Delete->setShortcut(QKeySequence(Qt::Key_Delete));
+    ui->b_Updata->setShortcut(QKeySequence(Qt::Key_F5));
+
+    connect(ui->b_StartGame, &QPushButton::clicked, this, &Manager::s_StartGame);
+    connect(ui->b_LastSaveContin, &QPushButton::clicked, this, &Manager::s_LastSaveContin);
+    connect(ui->b_Delete, &QPushButton::clicked, this, &Manager::s_Delete);
+    connect(ui->b_Updata, &QPushButton::clicked, this, &Manager::s_Update);
+
 }
 
 Manager::~Manager()
@@ -45,10 +51,13 @@ QListWidget *Manager::getPlugList() const
 
 void Manager::keyPressEvent(QKeyEvent* event)
 {
-    if(event->key() == Qt::Key_Escape) close();
+    if(event->key() == Qt::Key_Escape)
+    {
+        close();
+    }
 }
 
-void Manager::on_pushButton_clicked()
+void Manager::s_StartGame()
 {
     QListWidgetItem* item = ui->plugList->currentItem();
     emit ui->plugList->itemActivated(item);
@@ -56,20 +65,20 @@ void Manager::on_pushButton_clicked()
 }
 
 
-void Manager::on_pushButton_4_clicked()
+void Manager::s_Delete()
 {
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
 
-void Manager::on_pushButton_3_clicked()
+void Manager::s_Update()
 {
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }
 
 
-void Manager::on_pushButton_2_clicked()
+void Manager::s_LastSaveContin()
 {
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
 }

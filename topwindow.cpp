@@ -9,11 +9,10 @@ TopWindow::TopWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->headerText->setAccessibleName("Поле вывода");
-    ui->headerText->setAccessibleDescription("Здесь отбражается текст игры");
     ui->enterText->setAccessibleName("Поле ввода");
-    ui->enterText->setAccessibleDescription("Введите команду для игры");
-    announceText(ui->headerText, reference);
-    mw = new Manager;
+    reference = loadReferenceFromJson();
+    announceSetText(ui->headerText, reference);
+    mw = std::make_unique<Manager>();
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
@@ -35,7 +34,6 @@ TopWindow::TopWindow(QWidget *parent)
 TopWindow::~TopWindow()
 {
     delete ui;
-    delete mw;
 }
 
 
@@ -165,10 +163,7 @@ bool TopWindow::loadPlugin()
     const QStringList entries = pluginsDir.entryList(QDir::Files);
     for (const QString& fileName : entries)
     {
-        qDebug() << "Файл в папке plugins:" << fileName;
-        if(!fileName.endsWith(".dll", Qt::CaseInsensitive))
-            continue;
-        qDebug() << "Пробуем загрузить: " << fileName;
+        if(!fileName.endsWith(".dll", Qt::CaseInsensitive)) {continue;}
         QString fullPath = pluginsDir.absoluteFilePath(fileName);
         QPluginLoader* pluginLoad = new QPluginLoader(fullPath, this);
         QObject* plugin = pluginLoad->instance();
@@ -180,7 +175,6 @@ bool TopWindow::loadPlugin()
 
         if(!plugin)
         {
-            qDebug() << "Ошибка загрузки: " << pluginLoad->errorString();
             delete pluginLoad;
             continue;
         }
@@ -192,7 +186,6 @@ bool TopWindow::loadPlugin()
         {
             pluginsLoad.push_back(pluginLoad);
             pluginsInterface.push_back(gameInterface);
-            qDebug() << "Плагин успешно загружен: " << fileName;
         }
         else
         {
@@ -204,47 +197,48 @@ bool TopWindow::loadPlugin()
     return !pluginsLoad.isEmpty();
 }
 
-void TopWindow::announceText(QWidget *widget, const QString &text)
-{
-    int oldLength = 0;
-
-    if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
-    {
-        plain->appendPlainText(text);
-        oldLength = plain->toPlainText().length() - text.length();
-        plain->moveCursor(QTextCursor::StartOfBlock);
-    }
-    else if (auto* edit = qobject_cast<QLineEdit*>(widget))
-    {
-        edit->setText(text);
-    }
-
-    QAccessibleTextUpdateEvent ev(widget, oldLength, "", text);
-    QAccessible::updateAccessibility(&ev);
-
-    widget->setFocus();
-    QAccessibleEvent focusEvent(widget, QAccessible::Focus);
-    QAccessible::updateAccessibility(&focusEvent);
-}
-
 void TopWindow::announceSetText(QWidget *widget, const QString &text)
 {
     if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
     {
         plain->setPlainText(text);
-        plain->moveCursor(QTextCursor::StartOfBlock);
+        plain->selectAll();
     }
     else if (auto* edit = qobject_cast<QLineEdit*>(widget))
     {
         edit->setText(text);
     }
 
-    QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-    QAccessible::updateAccessibility(&ev);
+    QTimer::singleShot(100, [widget, text]
+    {
+        QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+        QAccessible::updateAccessibility(&ev);
+    });
 
-    widget->setFocus();
     QAccessibleEvent focusEvent(widget, QAccessible::Focus);
     QAccessible::updateAccessibility(&focusEvent);
+}
+
+QString TopWindow::loadReferenceFromJson()
+{
+    QFile file(":/reference.json");
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        qWarning("Ну удалось открыть reference.json");
+        return {};
+    }
+
+    QByteArray data = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+
+    if(!doc.isObject())
+    {
+        qWarning("reference.json не содержит JSON-Object");
+        return {};
+    }
+
+    QJsonObject obj = doc.object();
+    return obj.value("reference").toString();
 }
 
 void TopWindow::managerOpen()
@@ -264,7 +258,7 @@ void TopWindow::sendEcho()
 {
     if(!gameInterface) return;
 
-    announceText(ui->enterText, ui->enterText->text());
+    announceSetText(ui->enterText, ui->enterText->text());
     QString text = ">" + gameInterface->gameInput(ui->enterText->text());
     ui->enterText->clear();
 
@@ -277,10 +271,9 @@ void TopWindow::sendEcho()
         return;
     }
 
-
-    ui->headerText->clear();
-    announceText(ui->headerText, text);
+    announceSetText(ui->headerText, text);
 }
+
 
 void TopWindow::keyPressEvent(QKeyEvent *ev)
 {

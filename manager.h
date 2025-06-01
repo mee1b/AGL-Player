@@ -6,7 +6,7 @@
 #include <QShortcut>
 #include <QWidget>
 #include <QListWidget>
-#include <QTest>
+#include <QEvent>
 
 namespace Ui {
 class Manager;
@@ -28,16 +28,12 @@ public:
 
 
 private slots:
-    void on_pushButton_clicked();
-
-    void on_pushButton_4_clicked();
-
-    void on_pushButton_3_clicked();
-
-    void on_pushButton_2_clicked();
+    void s_StartGame();
+    void s_Delete();
+    void s_Update();
+    void s_LastSaveContin();
 
 private:
     Ui::Manager *ui;
-    TopWindow *topWindow;
     void keyPressEvent(QKeyEvent *event);
 };
