@@ -1,6 +1,7 @@
 #include "topwindow.h"
 #include "ui_topwindow.h"
-#include <QAccessibleTextUpdateEvent>
+#include <QAccessible>
+#include <QLabel>
 
 
 TopWindow::TopWindow(QWidget *parent)
@@ -16,7 +17,6 @@ TopWindow::TopWindow(QWidget *parent)
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
-    ui->headerText->setReadOnly(true);
 
     createActionsName();
 
@@ -210,10 +210,10 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
     }
 
     QTimer::singleShot(100, [widget, text]
-    {
-        QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-        QAccessible::updateAccessibility(&ev);
-    });
+                       {
+                           QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+                           QAccessible::updateAccessibility(&ev);
+                       });
 
     QAccessibleEvent focusEvent(widget, QAccessible::Focus);
     QAccessible::updateAccessibility(&focusEvent);
@@ -243,7 +243,7 @@ QString TopWindow::loadReferenceFromJson()
 
 void TopWindow::managerOpen()
 {
-    ui->headerText->setPlainText(reference);
+    announceSetText(ui->headerText, reference);
     disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
     ui->enterText->clear();
     mw->show();
@@ -283,12 +283,6 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
         return;
     }
 
-    if (ev->key() == Qt::Key_Tab || ev->key() == Qt::Key_Backtab)
-    {
-        QMainWindow::keyPressEvent(ev);
-        return;
-    }
-
     if(ev->text().isEmpty() &&
         (ev->key() == Qt::Key_Shift ||
         ev->key() == Qt::Key_Control ||
@@ -309,9 +303,31 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
 {
     if(obj == ui->headerText)
     {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+
+        if (keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Backtab)
+        {
+            QMainWindow::keyPressEvent(keyEvent);
+            return false;
+        }
+
+        if (keyEvent->modifiers() == Qt::ControlModifier)
+        {
+            if(keyEvent->key() == Qt::Key_C)
+            {
+                QMainWindow::keyPressEvent(keyEvent);
+                return false;
+            }
+            else if(keyEvent->key() == Qt::Key_A)
+            {
+                QMainWindow::keyPressEvent(keyEvent);
+                return false;
+            }
+        }
+
+
         if(event->type() == QEvent::KeyPress)
         {
-            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
             switch(keyEvent->key())
             {
             case Qt::Key_Up:
@@ -333,7 +349,7 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
                 return false;
                 break;
             default:
-                TopWindow::keyPressEvent(keyEvent);
+                QMainWindow::keyPressEvent(keyEvent);
                 return true;
                 break;
             }

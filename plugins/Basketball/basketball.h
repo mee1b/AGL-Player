@@ -3,6 +3,7 @@
 #include <QObject>
 #include "../../GameInterface.h"
 #include "structs.h"
+#include "enums.h"
 #include <random>
 
 class Basketball : public QObject, public GameInterface
@@ -32,6 +33,14 @@ private:
     QString outputMessage;
     QString end = ">Игра завершена.";
 
+    std::map<defense, QString> defenseName =
+        {
+            {defense::PRESSING, "Прессинг"},
+            {defense::PERSONAL_DEFENSE, "Персональная защита"},
+            {defense::ZONE_DEFENSE, "Зонная защита"},
+            {defense::NONE_DEFENSE, "Нет защиты"}
+        };
+
     enum class Step
     {
         Start,
@@ -56,4 +65,9 @@ private:
     void switchDefenseOpponent(const Player& player, Opponent& opponent);
     QString opponentAttack(Player& player, Opponent& opponent, bool& scoredOpponent);
     QString autoStep();
+    QString showDefensePlayer(const Player& player);
+    QString showDefenseOpponent(const Opponent& opponent);
+    bool rebound();
+    bool choiceOpponentShot();
+    void checkTeamSpirit(int& teamSpirit);
 };

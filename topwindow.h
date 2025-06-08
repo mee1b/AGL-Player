@@ -30,6 +30,15 @@ public:
     explicit TopWindow(QWidget *parent = nullptr);
     ~TopWindow();
 
+private:
+    void keyPressEvent(QKeyEvent *ev) override;
+    void createActionsName();
+    bool loadPlugin();
+    void announceSetText(QWidget *widget, const QString &text);
+protected:
+    QString loadReferenceFromJson();
+    bool eventFilter(QObject* obj, QEvent* event) override;
+
 public slots:
     void onPlugSelected(QListWidgetItem* item);
 
@@ -45,14 +54,5 @@ private:
     QVector<QPluginLoader*> pluginsLoad;
     QVector<GameInterface*> pluginsInterface;
     QString reference;
-
-    void keyPressEvent(QKeyEvent *ev) override;
-    void createActionsName();
-    bool loadPlugin();
-    void announceText(QWidget* widget, const QString& text);
-    void announceSetText(QWidget *widget, const QString &text);
-protected:
-    QString loadReferenceFromJson();
-    bool eventFilter(QObject* obj, QEvent* event) override;
 };
 

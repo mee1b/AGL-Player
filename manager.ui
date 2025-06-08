@@ -103,7 +103,7 @@
     <rect>
      <x>10</x>
      <y>4</y>
-     <width>687</width>
+     <width>691</width>
      <height>411</height>
     </rect>
    </property>
@@ -144,6 +144,15 @@
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>b_StartGame</tabstop>
+  <tabstop>b_LastSaveContin</tabstop>
+  <tabstop>b_Updata</tabstop>
+  <tabstop>b_Delete</tabstop>
+  <tabstop>switchGame</tabstop>
+  <tabstop>plugList</tabstop>
+  <tabstop>plugList_2</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

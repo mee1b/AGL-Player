@@ -1,7 +1,6 @@
 #include "basketball.h"
 #include "namespaces.h"
-#include "enums.h"
-#include <QTest>
+#include <map>
 
 
 Basketball::Basketball(QObject *parent)
@@ -31,6 +30,7 @@ QString Basketball::gameInput(const QString &playerChoice)
         case Step::Start:
             if (input == "начать")
             {
+                outputMessage = menu::RULES_IN_GAME;
                 player.name = history::PLAYER_TEAM_NAME;
                 opponent.name = history::STANDART_OPPONENT_NAME;
                 player.teamSpirit = engine::ZERO;
@@ -39,7 +39,8 @@ QString Basketball::gameInput(const QString &playerChoice)
                 opponent.score = engine::ZERO;
                 currentStep = Step::DefenseChoice;
                 input.clear();
-                return menu::rulesDefense;
+                outputMessage += menu::rulesDefense;
+                return outputMessage;
             }
             else
             {
@@ -65,13 +66,20 @@ QString Basketball::gameInput(const QString &playerChoice)
         case Step::PlayerInputShot:
         {
             int shot = input.toInt();
-            if (shot < 1 || shot > 4)
+            if (shot < 0 || shot > 4)
             {
                 return menu::REPEAT;
             }
 
             player.shot = shot;
             QString correctShot;
+
+            if(player.shot == 0)
+            {
+                outputMessage = menu::rulesDefense;
+                currentStep = Step::DefenseChoice;
+                return outputMessage;
+            }
 
             switch (shot)
             {
@@ -82,6 +90,7 @@ QString Basketball::gameInput(const QString &playerChoice)
             }
 
             outputMessage = QString("Вы выбрали %1.\n").arg(correctShot);
+            outputMessage += showDefensePlayer(player);
             outputMessage += "\n" + attackShotDescription(shot, player.teamSpirit);
 
             bool scored = false;
@@ -90,14 +99,27 @@ QString Basketball::gameInput(const QString &playerChoice)
             if (player.score >= 20)
             {
                 outputMessage = "Поздравляем! Вы победили!!!" + QString("Счет на табло: %1 - %2").arg(player.score).arg(opponent.score) +
-                                "\nИгра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";;
+                                "\nИгра завершена.\nВведите 'повтор', чтобы сыграть снова, или 'выход', чтобы выйти.";;
                 currentStep = Step::End;
                 break;
             }
 
             if (scored)
             {
-                outputMessage += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
+                outputMessage += QString("\nСчет на табло: %1 - %2\nВаш командный дух: %3").arg(player.score).arg(opponent.score).arg(player.teamSpirit);
+            }
+            else
+            {
+                if(rebound() && (stealed == false) && (blocked == false))
+                {
+                    outputMessage += QString("Ваша команда подобрала мяч!\nВаш командный дух: %1").arg(player.teamSpirit);
+                    currentStep = Step::PlayerRulesShot;
+                    break;
+                }
+                else if ((stealed == false) && (blocked == false))
+                {
+                    outputMessage += QString("Подбор за %1!\nВаш командный дух: %2").arg(opponent.name).arg(player.teamSpirit);
+                }
             }
 
             currentStep = Step::OpponentTurn;
@@ -106,13 +128,13 @@ QString Basketball::gameInput(const QString &playerChoice)
         }
 
         case Step::End:
-            if (input == "начать")
+            if (input.toLower().trimmed() == "повтор")
             {
                 currentStep = Step::Start;
                 input.clear();
-                break;
+                return Basketball::startMessage();
             }
-            else if (input == "выход")
+            else if (input.toLower().trimmed() == "выход")
             {
                 gameOver = true;
                 break;
@@ -155,12 +177,12 @@ void Basketball::choiceDefenseOpponent(int& defense)
 
 void Basketball::probabilityHitPlayer(int& hit, const int& teamSpirit)
 {
-    hit = distrib(gen);
+    hit = distrib(gen) + (teamSpirit / 2);
 }
 
 void Basketball::probabilityHitOpponent(int& hit, const int& teamSpiritOpponent)
 {
-    hit = distrib(gen);
+    hit = distrib(gen) + (teamSpiritOpponent / 2);
 }
 
 void Basketball::probalityStealOpponentOnPlayer(bool& steal)
@@ -240,10 +262,13 @@ QString Basketball::playerAttack(Player& player, Opponent& opponent, bool& score
         return result;
     }
 
+
     if(player.shot == 1 && hit >= 50)
     {
         player.score += 3;
         result += "Мяч в корзине!";
+        player.teamSpirit += 5;
+        checkTeamSpirit(player.teamSpirit);
         scored = true;
         return result;
     }
@@ -251,10 +276,12 @@ QString Basketball::playerAttack(Player& player, Opponent& opponent, bool& score
     {
         player.score += 2;
         result += "Мяч в корзине!";
+        player.teamSpirit += 5;
+        checkTeamSpirit(player.teamSpirit);
         scored = true;
         return result;
     }
-    else scored = false;
+    else scored = false; player.teamSpirit -= 5;
     result += attack::LOSE_SHOT;
 
     return result;
@@ -309,13 +336,25 @@ QString Basketball::opponentAttack(Player &player, Opponent &opponent, bool& sco
 
     probabilityHitOpponent(hit, opponent.teamSpiritOpponent);
 
-    if(hit >= 55)
+    if(hit >= 55 && (choiceOpponentShot()))
     {
         opponent.score += 2;
-        result += "Мяч в корзине!";
+        result += "Мяч в корзине! 2 очка!";
+        opponent.teamSpiritOpponent += 5;
+        checkTeamSpirit(opponent.teamSpiritOpponent);
         scoredOpponent = true;
         return result;
     }
+    else if (hit > 65 && (!choiceOpponentShot()))
+    {
+        opponent.score += 3;
+        result += "Мяч в корзине! 3 очка!";
+        opponent.teamSpiritOpponent += 5;
+        checkTeamSpirit(opponent.teamSpiritOpponent);
+        scoredOpponent = true;
+        return result;
+    }
+    else opponent.teamSpiritOpponent -= 5;
     result += "Это было близко, но мимо...";
     return result;
 }
@@ -331,13 +370,28 @@ QString Basketball::autoStep()
         break;
     case Step::OpponentTurn:
     {
+        switchDefenseOpponent(player, opponent);
         bool scoredOpponent = false;
         result = QString("%1 в атаке!\n").arg(opponent.name);
+        result += showDefenseOpponent(opponent);
         result += opponentAttack(player, opponent, scoredOpponent);
 
         if (scoredOpponent)
         {
             result += QString("\nСчет на табло: %1 - %2").arg(player.score).arg(opponent.score);
+        }
+        else
+        {
+            if(rebound() && (stealed == false) && (blocked == false))
+            {
+                result += QString("Команда %1 подобрали мяч!").arg(opponent.name);
+                currentStep = Step::OpponentTurn;
+                return result;
+            }
+            else if ((stealed == false) && (blocked == false))
+            {
+                result += "Подбор за вами!\n";
+            }
         }
 
         if (player.score >= 20)
@@ -363,5 +417,83 @@ QString Basketball::autoStep()
         break;
     }
     return result;
+}
+
+QString Basketball::showDefenseOpponent(const Opponent &opponent)
+{
+    QString showDefOpponent = "Защита противника: ";
+
+    switch(opponent.defense)
+    {
+    case static_cast<int>(defense::PRESSING):
+        showDefOpponent += defenseName.at(defense::PRESSING);
+        break;
+    case static_cast<int>(defense::PERSONAL_DEFENSE):
+        showDefOpponent += defenseName.at(defense::PERSONAL_DEFENSE);
+        break;
+    case static_cast<int>(defense::ZONE_DEFENSE):
+        showDefOpponent += defenseName.at(defense::ZONE_DEFENSE);
+        break;
+    case static_cast<int>(defense::NONE_DEFENSE):
+        showDefOpponent += defenseName.at(defense::NONE_DEFENSE);
+        break;
+    default:
+        break;
+    }
+
+    return showDefOpponent + "\n";
+}
+
+bool Basketball::rebound()
+{
+    engine::probalityRebound = distrib(gen);
+    if (engine::probalityRebound > engine::PROCENT_REBOUND)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Basketball::choiceOpponentShot()
+{
+    int shot = distrib(gen);
+
+    if(shot > 70) return true;
+    return false;
+}
+
+void Basketball::checkTeamSpirit(int &teamSpirit)
+{
+    if(teamSpirit > 20) teamSpirit = 20;
+    else if(teamSpirit < -10) teamSpirit = -10;
+}
+
+QString Basketball::showDefensePlayer(const Player &player)
+{
+    QString showDefPlayer = "Ваша защита: ";
+
+
+    switch(player.defense)
+    {
+    case static_cast<int>(defense::PRESSING):
+        showDefPlayer += defenseName.at(defense::PRESSING);
+        break;
+    case static_cast<int>(defense::PERSONAL_DEFENSE):
+        showDefPlayer += defenseName.at(defense::PERSONAL_DEFENSE);
+        break;
+    case static_cast<int>(defense::ZONE_DEFENSE):
+        showDefPlayer += defenseName.at(defense::ZONE_DEFENSE);
+        break;
+    case static_cast<int>(defense::NONE_DEFENSE):
+        showDefPlayer += defenseName.at(defense::NONE_DEFENSE);
+        break;
+    default:
+        break;
+    }
+
+    return showDefPlayer + "\n";
 }
 
