@@ -202,21 +202,21 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
     if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
     {
         plain->setPlainText(text);
-        plain->selectAll();
+        plain->setFocus();
+        talk_.output(text, true);
     }
     else if (auto* edit = qobject_cast<QLineEdit*>(widget))
     {
         edit->setText(text);
     }
 
-    QTimer::singleShot(100, [widget, text]
+    QTimer::singleShot(300, [widget, text]
                        {
                            QAccessibleTextUpdateEvent ev(widget, 0, "", text);
                            QAccessible::updateAccessibility(&ev);
+                           QAccessibleEvent focusEvent(widget, QAccessible::Focus);
+                           QAccessible::updateAccessibility(&focusEvent);
                        });
-
-    QAccessibleEvent focusEvent(widget, QAccessible::Focus);
-    QAccessible::updateAccessibility(&focusEvent);
 }
 
 QString TopWindow::loadReferenceFromJson()

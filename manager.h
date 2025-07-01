@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QListWidget>
 #include <QEvent>
+#include "talkwrap.h"
 
 namespace Ui {
 class Manager;

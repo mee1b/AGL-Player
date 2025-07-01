@@ -18,6 +18,9 @@
 #include "echo.h"
 #include "basketball.h"
 
+
+class TalkWrap;
+
 namespace Ui {
 class TopWindow;
 }
@@ -54,5 +57,6 @@ private:
     QVector<QPluginLoader*> pluginsLoad;
     QVector<GameInterface*> pluginsInterface;
     QString reference;
+    TalkWrap talk_;
 };
 

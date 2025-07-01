@@ -18,18 +18,39 @@ set(PROJECT_SOURCES
         main.cpp
 )
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  message(STATUS "Using Visual Studio C++ compiler, add Talk.dll")
+  # Add Visual Studio specific configurations here
+  add_subdirectory(talk)
+endif()
+
 add_executable(AGL-Manager
     ${PROJECT_SOURCES}
-    topwindow.h topwindow.cpp topwindow.ui
-    manager.h manager.cpp manager.ui
-    GameInterface.h resources.qrc
+    talkwrap.h
+    talkwrap.cpp
+    topwindow.h
+    topwindow.cpp
+    topwindow.ui
+    manager.h
+    manager.cpp
+    manager.ui
+    GameInterface.h
     resources.qrc
+
+
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_definitions(AGL-Manager PRIVATE USE_TALK_DLL)
+    target_link_libraries(AGL-Manager PRIVATE Talk)
+endif()
 
 
 add_subdirectory(plugins)
 
 target_include_directories(AGL-Manager PRIVATE plugins/echo)
+
+
 find_path(ECHO_INCLUDE_DIR echo.h)
 find_library(ECHO_LIBRARY libecho.dll)
 if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
