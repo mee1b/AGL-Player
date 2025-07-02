@@ -36,7 +36,8 @@ add_executable(AGL-Manager
     manager.ui
     GameInterface.h
     resources.qrc
-
+    NVDAController.h
+    NVDAController.cpp
 
 )
 

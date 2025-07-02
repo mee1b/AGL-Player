@@ -7,6 +7,7 @@
 #include <QWidget>
 #include <QListWidget>
 #include <QEvent>
+#include "NVDAController.h"
 #include "talkwrap.h"
 
 namespace Ui {

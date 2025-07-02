@@ -58,5 +58,6 @@ private:
     QVector<GameInterface*> pluginsInterface;
     QString reference;
     TalkWrap talk_;
+    Speaker talkNVDA_;
 };
 

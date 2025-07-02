@@ -203,7 +203,8 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
     {
         plain->setPlainText(text);
         plain->setFocus();
-        talk_.output(text, true);
+        if(talk_.currentReader() == "") talkNVDA_.speakTextNVDA(text);
+        else talk_.output(text, true);
     }
     else if (auto* edit = qobject_cast<QLineEdit*>(widget))
     {
