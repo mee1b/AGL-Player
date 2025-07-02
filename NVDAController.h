@@ -17,13 +17,13 @@ public:
     ~Speaker();
 
     void speakTextNVDA(const QString& text);
+    void stopSpeak();
 
 private slots:
     void onTimeout();
 
 private:
     bool loadNVDA();
-
     void speakNextLine();
 
 private:

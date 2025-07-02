@@ -60,6 +60,13 @@ void Speaker::speakTextNVDA(const QString &text)
     speakNextLine();
 }
 
+void Speaker::stopSpeak()
+{
+    m_timer.stop();
+    m_lines.clear();
+    m_index = 0;
+}
+
 void Speaker::speakNextLine()
 {
     if (m_index >= m_lines.size())
@@ -80,7 +87,7 @@ void Speaker::speakNextLine()
     ++m_index;
 
     // Запускаем таймер на 500 мс, по истечении которого продолжим озвучку
-    int delayTime = 200 + (50 * currentLine.length());
+    int delayTime = 200 + (75 * currentLine.length());
     if(delayTime < 500) delayTime = 500;
     m_timer.start(delayTime);
 }

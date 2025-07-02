@@ -12,7 +12,6 @@ TopWindow::TopWindow(QWidget *parent)
     ui->headerText->setAccessibleName("Поле вывода");
     ui->enterText->setAccessibleName("Поле ввода");
     reference = loadReferenceFromJson();
-    announceSetText(ui->headerText, reference);
     mw = std::make_unique<Manager>();
     setWindowTitle("AGL-Manager");
     setMinimumSize(781, 491);
@@ -244,10 +243,16 @@ QString TopWindow::loadReferenceFromJson()
 
 void TopWindow::managerOpen()
 {
-    announceSetText(ui->headerText, reference);
-    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+    talkNVDA_.stopSpeak();
     ui->enterText->clear();
+    connect(mw.get(), &Manager::closeManagerWindow, this, [this](){
+            announceSetText(ui->headerText, reference);
+    });
+    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
     mw->show();
+    mw->raise();
+    mw->activateWindow();
+    mw->setFocus(Qt::OtherFocusReason);
 }
 
 void TopWindow::exit()

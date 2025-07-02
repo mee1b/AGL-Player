@@ -52,6 +52,7 @@ void Manager::keyPressEvent(QKeyEvent* event)
 {
     if(event->key() == Qt::Key_Escape)
     {
+        emit closeManagerWindow();
         close();
     }
 }
@@ -80,5 +81,11 @@ void Manager::s_Update()
 void Manager::s_LastSaveContin()
 {
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+}
+
+void Manager::closeEvent(QCloseEvent *event)
+{
+    emit closeManagerWindow();
+    QWidget::closeEvent(event);
 }
 

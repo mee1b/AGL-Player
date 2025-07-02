@@ -28,6 +28,8 @@ public:
     void updateLists();
     QListWidget* getPlugList() const;
 
+signals:
+    void closeManagerWindow();
 
 private slots:
     void s_StartGame();
@@ -38,4 +40,5 @@ private slots:
 private:
     Ui::Manager *ui;
     void keyPressEvent(QKeyEvent *event);
+    void closeEvent(QCloseEvent* event);
 };
