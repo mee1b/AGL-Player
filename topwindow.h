@@ -59,5 +59,6 @@ private:
     QString reference;
     TalkWrap talk_;
     Speaker talkNVDA_;
+    bool speakFlag = false;
 };
 

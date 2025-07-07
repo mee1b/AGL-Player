@@ -15,9 +15,9 @@ public:
     bool isOver() const override;
 
 private:
-    QString add = ">Вы написали: ";
-    QString nothing = ">Вы ничего не написали!";
-    QString welcome = ">Добро пожаловать в игру \"ЭХО\"\nДля завершения игры введите \"выход\"";
+    QString add = "Вы написали: ";
+    QString nothing = "Вы ничего не написали!";
+    QString welcome = "Добро пожаловать в игру \"ЭХО\"\nДля завершения игры введите \"выход\"";
     QString quit = "выход";
     QString checkQuit{};
 };

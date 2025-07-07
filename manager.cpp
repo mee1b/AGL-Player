@@ -6,11 +6,10 @@ Manager::Manager(QWidget *parent)
     , ui(new Ui::Manager)
 {
     ui->setupUi(this);
-    setWindowTitle("Менеджер игр");
     setWindowModality(Qt::ApplicationModal);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint);
     setWindowFlag(Qt::WindowCloseButtonHint, true);
-
+    setWindowTitle("Менеджер игр");
 
     // свич табы
     ui->switchGame->setTabText(0, "Установленные игры");
@@ -26,6 +25,12 @@ Manager::Manager(QWidget *parent)
     connect(ui->b_LastSaveContin, &QPushButton::clicked, this, &Manager::s_LastSaveContin);
     connect(ui->b_Delete, &QPushButton::clicked, this, &Manager::s_Delete);
     connect(ui->b_Updata, &QPushButton::clicked, this, &Manager::s_Update);
+
+    // QTimer::singleShot(500, [this]()
+    //                    {
+    //     ui->plugList->setFocus();
+    //     ui->plugList->setCurrentRow(0);
+    // });
 }
 
 Manager::~Manager()
@@ -52,7 +57,6 @@ void Manager::keyPressEvent(QKeyEvent* event)
 {
     if(event->key() == Qt::Key_Escape)
     {
-        emit closeManagerWindow();
         close();
     }
 }
@@ -61,7 +65,7 @@ void Manager::s_StartGame()
 {
     QListWidgetItem* item = ui->plugList->currentItem();
     emit ui->plugList->itemActivated(item);
-    close();
+    this->hide();
 }
 
 

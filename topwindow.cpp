@@ -25,9 +25,15 @@ TopWindow::TopWindow(QWidget *parent)
     }
     mw->updateLists();
     managerOpen();
+
     QListWidget* pluginList = mw->getPlugList();
     connect(pluginList, &QListWidget::itemActivated, this, &TopWindow::onPlugSelected);
 
+    connect(qApp, &QApplication::focusChanged, this, [this](QWidget* oldWidget, QWidget* newWidget)
+            {
+        if(oldWidget == ui->headerText && newWidget == ui->enterText) talkNVDA_.stopSpeak();
+        if(newWidget == ui->headerText) talkNVDA_.speakTextNVDA(ui->headerText->toPlainText());
+    }); //Здесь ловим смену фокуса через QApplication::focusChanged, чтобы управлять озвучкой
 }
 
 TopWindow::~TopWindow()
@@ -202,21 +208,26 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
     {
         plain->setPlainText(text);
         plain->setFocus();
-        if(talk_.currentReader() == "") talkNVDA_.speakTextNVDA(text);
-        else talk_.output(text, true);
+        if(talk_.currentReader() == "")
+        {
+            talkNVDA_.speakWithFallback(ui->headerText, text);
+        }
+        else
+        {
+            talk_.output(text, true);
+            // QTimer::singleShot(1000, [widget, text]
+            //                    {
+            //                        QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+            //                        QAccessible::updateAccessibility(&ev);
+            //                        QAccessibleEvent focusEvent(widget, QAccessible::Focus);
+            //                        QAccessible::updateAccessibility(&focusEvent);
+            //                    });
+        }
     }
     else if (auto* edit = qobject_cast<QLineEdit*>(widget))
     {
         edit->setText(text);
     }
-
-    QTimer::singleShot(300, [widget, text]
-                       {
-                           QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-                           QAccessible::updateAccessibility(&ev);
-                           QAccessibleEvent focusEvent(widget, QAccessible::Focus);
-                           QAccessible::updateAccessibility(&focusEvent);
-                       });
 }
 
 QString TopWindow::loadReferenceFromJson()
@@ -250,9 +261,13 @@ void TopWindow::managerOpen()
     });
     disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
     mw->show();
-    mw->raise();
-    mw->activateWindow();
-    mw->setFocus(Qt::OtherFocusReason);
+    mw->setFocus();
+    QTimer::singleShot(300, [=]()
+                       {
+                           mw->getPlugList()->setFocus();
+                           mw->getPlugList()->setCurrentRow(0);
+                       });
+    talkNVDA_.speakTextNVDA(mw->namePlugin[0]);
 }
 
 void TopWindow::exit()
@@ -265,7 +280,7 @@ void TopWindow::sendEcho()
     if(!gameInterface) return;
 
     announceSetText(ui->enterText, ui->enterText->text());
-    QString text = ">" + gameInterface->gameInput(ui->enterText->text());
+    QString text = gameInterface->gameInput(ui->enterText->text());
     ui->enterText->clear();
 
     if(gameInterface->isOver())
@@ -280,7 +295,6 @@ void TopWindow::sendEcho()
     announceSetText(ui->headerText, text);
 }
 
-
 void TopWindow::keyPressEvent(QKeyEvent *ev)
 {
     if (ev->key() == Qt::Key_Return || ev->key() == Qt::Key_Enter)
@@ -289,6 +303,10 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
         return;
     }
 
+    if(ev->modifiers() == Qt::Key_Control && ev->key() == Qt::Key_A)
+    {
+        return;
+    }
     if(ev->text().isEmpty() &&
         (ev->key() == Qt::Key_Shift ||
         ev->key() == Qt::Key_Control ||
@@ -307,50 +325,30 @@ void TopWindow::keyPressEvent(QKeyEvent *ev)
 
 bool TopWindow::eventFilter(QObject *obj, QEvent *event)
 {
-    if(obj == ui->headerText)
+    if(obj == ui->headerText && event->type() == QEvent::KeyPress)
     {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
-        if (keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Backtab)
+        if (obj == ui->headerText)
         {
-            QMainWindow::keyPressEvent(keyEvent);
-            return false;
-        }
-
-        if (keyEvent->modifiers() == Qt::ControlModifier)
-        {
-            if(keyEvent->key() == Qt::Key_C)
+            if(keyEvent->modifiers() == Qt::ControlModifier)
             {
-                QMainWindow::keyPressEvent(keyEvent);
-                return false;
+                switch(keyEvent->key())
+                {
+                case Qt::Key_A:
+                case Qt::Key_Z:
+                case Qt::Key_C:
+                    QMainWindow::keyPressEvent(keyEvent);
+                    return false;
+                }
             }
-            else if(keyEvent->key() == Qt::Key_A)
-            {
-                QMainWindow::keyPressEvent(keyEvent);
-                return false;
-            }
-        }
-
-
-        if(event->type() == QEvent::KeyPress)
-        {
             switch(keyEvent->key())
             {
             case Qt::Key_Up:
-                return false;
-                break;
             case Qt::Key_Down:
-                return false;
-                break;
             case Qt::Key_Left:
-                return false;
-                break;
             case Qt::Key_Right:
-                return false;
-                break;
             case Qt::CTRL:
-                return false;
-                break;
             case Qt::Key_Home:
                 return false;
                 break;

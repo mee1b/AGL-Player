@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <QString>
 #include <QDebug>
+#include <QAccessible>
+#include <QAccessibleEvent>
 #include "NVDAController.h"
 
 Speaker::Speaker(QObject* parent) :
@@ -67,15 +69,59 @@ void Speaker::stopSpeak()
     m_index = 0;
 }
 
+void Speaker::speakWithFallback(QWidget* widget, const QString &text)
+{
+    stopSpeak();
+
+    speakTextNVDA(text);
+    QTimer* checker = new QTimer(widget); // делаем виджет родителем таймера, чтобы при уничтожение виджета уничтожался и таймер
+    checker->setInterval(300); // Делаем таймер, чтобы следить читает ли NVDA или уже закончила
+
+    connect(checker, &QTimer::timeout, widget, [=]()
+            {
+                if(!widget || !widget->isVisible())
+                {
+                    checker->stop();
+                    checker->deleteLater();
+                    return;
+                }
+                if(!isSpeakNVDA)
+                {
+                    // QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+                    // QAccessible::updateAccessibility(&ev);
+                    // QAccessibleEvent focusEv(widget, QAccessible::Focus);
+                    // QAccessible::updateAccessibility(&focusEv);
+
+                    checker->stop();
+                    checker->deleteLater();
+                }
+            }); // Подключаем коннект, когда интервал таймера проходит, проверяем состояние читает/не читает NVDA
+    checker->start();
+    // else
+    // {
+    //     QAccessibleTextUpdateEvent ev(widget, 0, "", text);
+    //     QAccessible::updateAccessibility(&ev);
+    //     QAccessibleEvent focusEv(widget, QAccessible::Focus);
+    //     QAccessible::updateAccessibility(&focusEv);
+    // }
+}
+
 void Speaker::speakNextLine()
 {
-    if (m_index >= m_lines.size())
+    if ((m_index >= m_lines.size()) /*|| m_lines.size() <= 1*/)
     {
         m_timer.stop();
+        isSpeakNVDA = false;
         qDebug() << "Все озвучено!";
         return;
     }
-
+    isSpeakNVDA = true;
+    if(m_index == 0)
+    {
+        ++m_index;
+        m_timer.start(2000);
+        return;
+    }
     const QString& currentLine = m_lines.at(m_index);
     std::wstring wline = currentLine.toStdWString();
 
@@ -87,8 +133,8 @@ void Speaker::speakNextLine()
     ++m_index;
 
     // Запускаем таймер на 500 мс, по истечении которого продолжим озвучку
-    int delayTime = 200 + (75 * currentLine.length());
-    if(delayTime < 500) delayTime = 500;
+    int delayTime = 200 + (50 * currentLine.length());
+    if(delayTime < 300) delayTime = 300;
     m_timer.start(delayTime);
 }
 

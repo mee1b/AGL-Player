@@ -39,6 +39,6 @@ private slots:
 
 private:
     Ui::Manager *ui;
-    void keyPressEvent(QKeyEvent *event);
-    void closeEvent(QCloseEvent* event);
+    void keyPressEvent(QKeyEvent *event) override;
+    void closeEvent(QCloseEvent* event) override;
 };
