@@ -18,6 +18,7 @@ QString Basketball::startMessage() const
 QString Basketball::gameInput(const QString &playerChoice)
 {
     outputMessage.clear();
+    gameOver = false;
 
     QString input = playerChoice.toLower().trimmed();
     if (input == "выход")
@@ -88,7 +89,6 @@ QString Basketball::gameInput(const QString &playerChoice)
             case 3: correctShot = "Лэй-апп"; break;
             case 4: correctShot = "Комбинация"; break;
             }
-
             outputMessage = QString("Вы выбрали %1.\n").arg(correctShot);
             outputMessage += showDefensePlayer(player);
             outputMessage += "\n" + attackShotDescription(shot, player.teamSpirit);
@@ -141,7 +141,7 @@ QString Basketball::gameInput(const QString &playerChoice)
             }
             else
             {
-                outputMessage = "Игра завершена.\nВведите 'начать', чтобы сыграть снова, или 'выход', чтобы выйти.";
+                outputMessage = "Игра завершена.\nВведите 'повтор', чтобы сыграть снова, или 'выход', чтобы выйти.";
                 return outputMessage.trimmed();
             }
         }
@@ -281,7 +281,12 @@ QString Basketball::playerAttack(Player& player, Opponent& opponent, bool& score
         scored = true;
         return result;
     }
-    else scored = false; player.teamSpirit -= 5;
+    else
+    {
+        scored = false;
+        player.teamSpirit -= 5;
+        checkTeamSpirit(player.teamSpirit);
+    }
     result += attack::LOSE_SHOT;
 
     return result;
@@ -365,7 +370,7 @@ QString Basketball::autoStep()
     switch(currentStep)
     {
     case Step::PlayerRulesShot:
-        result += menu::rulesShot;
+        result += showDefenseOpponent(opponent) + menu::rulesShot;
         currentStep = Step::PlayerInputShot;
         break;
     case Step::OpponentTurn:
@@ -373,7 +378,6 @@ QString Basketball::autoStep()
         switchDefenseOpponent(player, opponent);
         bool scoredOpponent = false;
         result = QString("%1 в атаке!\n").arg(opponent.name);
-        result += showDefenseOpponent(opponent);
         result += opponentAttack(player, opponent, scoredOpponent);
 
         if (scoredOpponent)
@@ -467,8 +471,9 @@ bool Basketball::choiceOpponentShot()
 
 void Basketball::checkTeamSpirit(int &teamSpirit)
 {
-    if(teamSpirit > 20) teamSpirit = 20;
-    else if(teamSpirit < -10) teamSpirit = -10;
+    if(teamSpirit >= 20) teamSpirit = 20;
+    else if(teamSpirit <= -10) teamSpirit = -10;
+    else return;
 }
 
 QString Basketball::showDefensePlayer(const Player &player)

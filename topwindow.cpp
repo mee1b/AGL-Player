@@ -9,7 +9,6 @@ TopWindow::TopWindow(QWidget *parent)
     , ui(new Ui::TopWindow)
 {
     ui->setupUi(this);
-    ui->headerText->setAccessibleName("Поле вывода");
     ui->enterText->setAccessibleName("Поле ввода");
     reference = loadReferenceFromJson();
     mw = std::make_unique<Manager>();
@@ -224,10 +223,10 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
             //                    });
         }
     }
-    else if (auto* edit = qobject_cast<QLineEdit*>(widget))
-    {
-        edit->setText(text);
-    }
+    // else if (auto* edit = qobject_cast<QLineEdit*>(widget))
+    // {
+    //     edit->setText(text);
+    // }
 }
 
 QString TopWindow::loadReferenceFromJson()
@@ -266,18 +265,19 @@ void TopWindow::managerOpen()
                        {
                            mw->getPlugList()->setFocus();
                            mw->getPlugList()->setCurrentRow(0);
-                       });
+                       }); // асинхронно ставим фокус, для выделения первой строки списка и убираем этим двойное проговаривание менеджер игр окно
     talkNVDA_.speakTextNVDA(mw->namePlugin[0]);
 }
 
 void TopWindow::exit()
 {
-    QWidget::close();
+    QApplication::quit();
 }
 
 void TopWindow::sendEcho()
 {
     if(!gameInterface) return;
+
 
     announceSetText(ui->enterText, ui->enterText->text());
     QString text = gameInterface->gameInput(ui->enterText->text());
