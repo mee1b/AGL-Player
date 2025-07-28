@@ -3,7 +3,7 @@
 #include <QString>
 #include <QtPlugin>
 
-
+//API для игр плагинов
 class GameInterface
 {
 public :

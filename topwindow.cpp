@@ -12,7 +12,7 @@ TopWindow::TopWindow(QWidget *parent)
     ui->enterText->setAccessibleName("Поле ввода");
     reference = loadReferenceFromJson();
     mw = std::make_unique<Manager>();
-    setWindowTitle("AGL-Manager");
+    setWindowTitle("AGL-Player");
     setMinimumSize(781, 491);
     ui->headerText->installEventFilter(this);
 
@@ -214,19 +214,8 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
         else
         {
             talk_.output(text, true);
-            // QTimer::singleShot(1000, [widget, text]
-            //                    {
-            //                        QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-            //                        QAccessible::updateAccessibility(&ev);
-            //                        QAccessibleEvent focusEvent(widget, QAccessible::Focus);
-            //                        QAccessible::updateAccessibility(&focusEvent);
-            //                    });
         }
     }
-    // else if (auto* edit = qobject_cast<QLineEdit*>(widget))
-    // {
-    //     edit->setText(text);
-    // }
 }
 
 QString TopWindow::loadReferenceFromJson()

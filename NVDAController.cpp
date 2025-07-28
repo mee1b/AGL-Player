@@ -87,23 +87,11 @@ void Speaker::speakWithFallback(QWidget* widget, const QString &text)
                 }
                 if(!isSpeakNVDA)
                 {
-                    // QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-                    // QAccessible::updateAccessibility(&ev);
-                    // QAccessibleEvent focusEv(widget, QAccessible::Focus);
-                    // QAccessible::updateAccessibility(&focusEv);
-
                     checker->stop();
                     checker->deleteLater();
                 }
             }); // Подключаем коннект, когда интервал таймера проходит, проверяем состояние читает/не читает NVDA
     checker->start();
-    // else
-    // {
-    //     QAccessibleTextUpdateEvent ev(widget, 0, "", text);
-    //     QAccessible::updateAccessibility(&ev);
-    //     QAccessibleEvent focusEv(widget, QAccessible::Focus);
-    //     QAccessible::updateAccessibility(&focusEv);
-    // }
 }
 
 void Speaker::speakNextLine()

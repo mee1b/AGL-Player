@@ -36,13 +36,16 @@ public:
 private:
     void keyPressEvent(QKeyEvent *ev) override;
     void createActionsName();
+    //метод загрузки плагинов
     bool loadPlugin();
+    //Главный метод озвучки приложения
     void announceSetText(QWidget *widget, const QString &text);
 protected:
     QString loadReferenceFromJson();
     bool eventFilter(QObject* obj, QEvent* event) override;
 
 public slots:
+    //слот для выбора имя плагина = игра плагин
     void onPlugSelected(QListWidgetItem* item);
 
 private slots:
@@ -54,7 +57,9 @@ private:
     Ui::TopWindow* ui;
     std::unique_ptr<Manager> mw;
     GameInterface* gameInterface = nullptr;
+    //вектор плагинов
     QVector<QPluginLoader*> pluginsLoad;
+    //вектор плагинов реализующих GameInterface
     QVector<GameInterface*> pluginsInterface;
     QString reference;
     TalkWrap talk_;

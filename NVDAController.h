@@ -18,8 +18,11 @@ public:
     explicit Speaker(QObject *parent = nullptr);
     ~Speaker();
 
+    //метод для принудительной озвучки NVDA
     void speakTextNVDA(const QString& text);
+    //метод для остановки озвучки NVDA(используется для синхоронизации)
     void stopSpeak();
+    //метод для опредение ридера и озвучка стандарт/NVDA
     void speakWithFallback(QWidget* widget, const QString& text);
 
 private slots:

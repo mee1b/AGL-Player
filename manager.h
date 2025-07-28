@@ -25,6 +25,7 @@ public:
     ~Manager();
 
     QVector<QString> namePlugin{};
+    //метод для загрузки имен плагинов в менеджер
     void updateLists();
     QListWidget* getPlugList() const;
 
