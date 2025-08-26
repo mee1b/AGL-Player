@@ -7,39 +7,44 @@
 #include <QWidget>
 #include <QListWidget>
 #include <QEvent>
-#include "NVDAController.h"
-#include "talkwrap.h"
 
 namespace Ui {
 class Manager;
 }
-
-class TopWindow;
 
 class Manager : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit Manager(QWidget *parent = nullptr);
-    ~Manager();
+    explicit Manager(QWidget *parent = nullptr); // Конструктор, инициализация UI и сигналов/слотов
+    ~Manager(); // Деструктор, очистка ресурсов
 
-    QVector<QString> namePlugin{};
-    //метод для загрузки имен плагинов в менеджер
+    QVector<QString> namePlugin{}; // Список имен загруженных плагинов (игр)
+
+    // Метод для обновления UI списка плагинов в менеджере
+    // Берёт данные из namePlugin и отображает их в QListWidget
     void updateLists();
+
+    // Возвращает указатель на QListWidget с плагинами
+    // Используется для подключения сигналов, получения выбранного элемента и т.д.
     QListWidget* getPlugList() const;
+    QListWidget* getPlugList2() const;
 
 signals:
-    void closeManagerWindow();
+    void closeManagerWindow(); // Сигнал о закрытии окна менеджера
+    void deletePlugin(QListWidgetItem* item); // Сигнал запроса на удаление выбранного плагина
+    void update(); // Сигнал для обновления списка плагинов (например, после добавления новых)
 
 private slots:
-    void s_StartGame();
-    void s_Delete();
-    void s_Update();
-    void s_LastSaveContin();
+    void s_StartGame();       // Слот: запуск выбранной игры
+    void s_Delete();          // Слот: удаление выбранного плагина
+    void s_Update();          // Слот: обновление списка плагинов
+    void s_LastSaveContin();  // Слот: продолжить игру с последнего сохранения
 
 private:
-    Ui::Manager *ui;
-    void keyPressEvent(QKeyEvent *event) override;
-    void closeEvent(QCloseEvent* event) override;
+    Ui::Manager *ui; // Указатель на UI, сгенерированный из .ui файла
+
+    void keyPressEvent(QKeyEvent *event) override; // Обработка нажатий клавиш в окне менеджера
+    void closeEvent(QCloseEvent* event) override;  // Обработка закрытия окна (для emit closeManagerWindow)
 };

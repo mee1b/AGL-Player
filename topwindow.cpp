@@ -1,66 +1,123 @@
-#include "topwindow.h"
-#include "ui_topwindow.h"
 #include <QAccessible>
 #include <QLabel>
+#include <QThread>
+#include <algorithm> // используем std::find, std::distance
 
+#include "utilities.h"
+#include "topwindow.h"
+#include "ui_topwindow.h"
+
+// ============================================================================
+// TopWindow: основной класс приложения
+// ----------------------------------------------------------------------------
+// Здесь содержится логика загрузки плагинов, взаимодействия с окном менеджера,
+// обработки ввода, озвучивания (NVDA) и удаления плагинов.
+// Важно: в комментариях подчёркнуты места, которые часто приводят к крашам:
+//  - работа с QPluginLoader::instance() и unload()
+//  - порядок удаления/освобождения объектов/указателей
+//  - синхронизация UI (QListWidget) и внутренних векторов
+// ============================================================================
 
 TopWindow::TopWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TopWindow)
 {
     ui->setupUi(this);
+
+    // --- Доступность ---
+    // Назначаем "имя" для поля ввода, чтобы скринридеры могли идентифицировать элемент.
     ui->enterText->setAccessibleName("Поле ввода");
+
+    // Загружаем справочный текст из resource JSON (путь :/reference.json)
+    // Функция loadReferenceFromJson возвращает QString справки или пустую строку.
     reference = loadReferenceFromJson();
+
+    // Создаём окно-менеджер плагинов. std::unique_ptr используется для автоматического управления.
     mw = std::make_unique<Manager>();
+
+    // Настройка внешнего вида основного окна
     setWindowTitle("AGL-Player");
     setMinimumSize(781, 491);
+
+    // Устанавливаем фильтр событий для headerText — потом в eventFilter используется своя логика.
     ui->headerText->installEventFilter(this);
 
+    // Создаём и настраиваем действия меню/горячие клавиши
     createActionsName();
 
+    // Загружаем плагины. Если не удалось — показываем информацию (не фатальная ошибка).
+    // loadPlugin() наполняет mw->namePlugin, filePaths, pluginsLoad, pluginsInterface.
     if(!loadPlugin())
     {
-        QMessageBox::information(this, "Ошибка!", "Не удалось загрузить плагин!");
+        QMessageBox::information(this, tr("Ошибка!"), tr("Не удалось загрузить плагин!"));
     }
+    // Обновляем UI списка плагинов в менеджере. Manager::updateLists добавляет элементы в QListWidget.
     mw->updateLists();
+
+    // Открываем менеджер (показываем его и ставим фокус)
     managerOpen();
 
+    // Подключаем сигнал itemActivated только если список не пуст — это снижает шанс лишних вызовов.
     QListWidget* pluginList = mw->getPlugList();
-    connect(pluginList, &QListWidget::itemActivated, this, &TopWindow::onPlugSelected);
+    if(pluginList->count() != 0) {
+        connect(pluginList, &QListWidget::itemActivated, this, &TopWindow::onPlugSelected);
+    }
 
+    // Подписываемся на глобальную смену фокуса, чтобы управлять озвучкой NVDA:
+    // - при попадании фокуса на headerText читаем его текст
+    // - при уходе — останавливаем озвучку
     connect(qApp, &QApplication::focusChanged, this, [this](QWidget* oldWidget, QWidget* newWidget)
             {
-        if(oldWidget == ui->headerText && newWidget == ui->enterText) talkNVDA_.stopSpeak();
-        if(newWidget == ui->headerText) talkNVDA_.speakTextNVDA(ui->headerText->toPlainText());
-    }); //Здесь ловим смену фокуса через QApplication::focusChanged, чтобы управлять озвучкой
+                if(oldWidget == ui->headerText && newWidget == ui->enterText) talkNVDA_.stopSpeak();
+                if(newWidget == ui->headerText) talkNVDA_.speakTextNVDA(ui->headerText->toPlainText());
+            }); //Здесь ловим смену фокуса через QApplication::focusChanged, чтобы управлять озвучкой
+
+    // Подписываемся на сигнал удаления плагина от окна менеджера.
+    // В Manager сигнал defined как: void deletePlugin(QListWidgetItem*);
+    connect(mw.get(), &Manager::deletePlugin, this, &TopWindow::deletePlug);
+    connect(mw.get(), &Manager::update, this, &TopWindow::updatePlug);
+    connect(ui->startGameAgain, &QAction::triggered, this, &TopWindow::againGame);
 }
 
 TopWindow::~TopWindow()
 {
+    // Удаляем UI. Остальные ресурсы — либо std::unique_ptr, либо векторы которые мы очищаем отдельно.
     delete ui;
 }
 
-
+// ----------------------------
+// Слот: пользователь активировал элемент (двоичный клик/Enter) в списке плагинов
+// ----------------------------
 void TopWindow::onPlugSelected(QListWidgetItem* item)
 {
+    currentItem = item;
+    // Если элемент пустой — ничего не делаем (защита от nullptr)
     if(!item) return;
 
     QString plugName = item->text();
 
+    // Ищем соответствие имени в нашем списке загруженных плагинов
+    // (mw->namePlugin должен быть в том же порядке, что и pluginsLoad/pluginsInterface/filePaths).
     for(int i = 0; i < mw->namePlugin.size(); ++i)
     {
         if(mw->namePlugin[i] == plugName)
         {
+            // Берём интерфейс для плагина — это указатель, полученный при loadPlugin().
             gameInterface = pluginsInterface[i];
+
             if(gameInterface)
             {
+                // Отображаем стартовое сообщение плагина в headerText
                 announceSetText(ui->headerText, gameInterface->startMessage());
-                disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
-                connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
-            }
 
+                // Переподключаем ввод: убираем старый слот (если был) и подключаем runGame.
+                // Это нужно, чтобы ввод Enter отправлял данные в текущий плагин.
+                disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+                connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+            }
             else
             {
+                // Если по какой-то причине плагин не реализует GameInterface — предупреждаем пользователя.
                 QMessageBox::warning(this, "Ошибка", "Плагин не реализует GameInterface");
             }
             break;
@@ -68,6 +125,308 @@ void TopWindow::onPlugSelected(QListWidgetItem* item)
     }
 }
 
+// ============================================================================
+// deletePlug — удаление плагина (вызывается из Manager)
+// ----------------------------------------------------------------------------
+// Подсказка: здесь много "подводных камней":
+//  - порядок действий: сначала убрать все ссылки/сигналы на instance, затем unload(), затем удалить файл.
+//  - QPluginLoader::unload() удалит instance (если он родитель для instance); но если где-то остались живые объекты
+//    с кодом из плагина — unload() возвратит false и DLL останется заблокированной.
+//  - нужно поддерживать согласованность между QListWidget (UI) и внутренними векторами (имена/путь/загрузчики).
+// ============================================================================
+void TopWindow::deletePlug(QListWidgetItem* item)
+{
+    // ---------- 0) Базовые проверки ----------
+    if(item == nullptr) return; // защита от некорректного вызова
+
+    // Ищем индекс плагина по имени в mw->namePlugin.
+    // Важно: используем имя (item->text()), а не указатели, потому что мы синхронизируем векторы по индексам.
+    auto iter = std::find(mw->namePlugin.begin(), mw->namePlugin.end(), item->text());
+    if(iter == mw->namePlugin.end()) return; // если не нашли — выходим (может уже удалён)
+
+    int index = std::distance(mw->namePlugin.begin(), iter);
+
+    // Делаем дополнительную защиту: index должен быть валиден для filePaths/other vectors.
+    if (index < 0 || static_cast<size_t>(index) >= filePaths.size()) {
+        QMessageBox::warning(this, tr("Error!"), tr("Плагин не найден!"));
+        return;
+    }
+
+    // Получаем QPluginLoader* для данного индекса
+    QPluginLoader* loader = pluginsLoad[index];
+    if (!loader) {
+        QMessageBox::warning(this, tr("Error!"), tr("Загрузчик плагина отсутствует!"));
+        return;
+    }
+
+    // Получаем путь (строка) к файлу плагина — для логов и удаления.
+    const QString path = filePaths[index];
+
+    // ---------- 1) Аккуратно «отцепляемся» от instance ----------
+    // Если instance() != nullptr, значит сейчас в памяти есть объект плагина.
+    // Наша цель: гарантировать, что **никто** больше не держит ссылки/сигналы на объекты плагина,
+    // потому что unload() удалит/освободит модуль, и обращение к таким объектам приведёт к крашу.
+    QObject* instance = loader->instance(); // может быть nullptr, если уже выгружен
+
+    if (instance) {
+        // Отключаем все соединения связанных сигналов/слотов у instance
+        // Это эквивалент instance->disconnect(nullptr, nullptr, nullptr, nullptr)
+        // и защищает от случаев, когда слоты в основном приложении ещё подписаны на сигналы плагина.
+        instance->disconnect();
+
+        // Если мы в UI держали указатель на интерфейс (gameInterface), обнуляем его,
+        // чтобы в дальнейшем не обращаться к освобождённому объекту.
+        if (gameInterface == pluginsInterface[index]) {
+            gameInterface = nullptr;
+        }
+
+        // В нашем internal векторе мы тоже сбрасываем указатель, чтобы не использовать его после unload.
+        pluginsInterface[index] = nullptr;
+
+        // ВАЖНО: не делаем delete(instance) или instance->deleteLater()!
+        // По документации QPluginLoader::unload() сам удалит instance синхронно при успешном unload().
+        // Если вы вызовете delete вручную, может случиться двойное удаление.
+        // Поэтому здесь только отключаем связи и обнуляем все внешние указатели.
+    }
+
+    // ---------- 2) Выгружаем .dll через QPluginLoader ----------
+    // QPluginLoader::unload() синхронно попытается выгрузить модуль и уничтожить instance.
+    // Если какие-то объекты плагина живы (включая дочерние объекты, таймеры, запущенные потоки,
+    // открытые файловые дескрипторы и т.п.), unload вернёт false.
+    if (!loader->unload()) {
+        qWarning() << "[Plugin] unload FAILED for" << path
+                   << "error:" << loader->errorString();
+
+        // Сообщаем пользователю — вот типичная причина, почему файл нельзя удалить:
+        // остались живые объекты, таймеры или другой QPluginLoader держит библиотеку открытой.
+        QMessageBox::warning(this, tr("Error!"),
+                             tr("Не удалось выгрузить плагин (остались живые объекты)."));
+        return;
+    }
+
+    // Иногда Windows некоторое время удерживает дескриптор. Чтобы повысить шанс удаления,
+    // даём событийному циклу поработать (небольшая "передышка").
+    for (int i = 0; i < 3; ++i) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+    }
+
+    // ---------- 3) Пробуем удалить файл ----------
+    // После успешного unload() файл обычно становится доступен для удаления.
+    // Но возможны внешние факторы: антивирус, индексатор, другой процесс и т. д.
+    bool removed = false;
+    for (int attempt = 0; attempt < 5 && !(removed = QFile::remove(path)); ++attempt) {
+        qWarning() << "[Plugin] remove failed, retry" << attempt+1 << "for" << path;
+        QThread::msleep(30); // даём немного времени между попытками
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+    }
+
+    if (!removed) {
+        // Если remove не прошёл, часто помогает переименование — тогда по крайней мере UI знает, что плагин "удален".
+        const QString tombstone = path + ".deleted." + QString::number(QDateTime::currentMSecsSinceEpoch());
+        if (QFile::rename(path, tombstone)) {
+            // rename успешен — считайте, что физически "удалили" плагин (переименовали).
+            qWarning() << "[Plugin] remove failed, but rename to tombstone succeeded:" << tombstone;
+        } else {
+            // Если ни удалить, ни переименовать нельзя — сообщаем пользователю о причинах.
+            qWarning() << "[Plugin] remove & rename BOTH failed for" << path;
+            QMessageBox::warning(this, tr("Error!"),
+                                 tr("Не удалось удалить/переименовать файл плагина.\n"
+                                    "Возможные причины: антивирус/индексатор блокирует файл, другой процесс держит DLL."));
+
+            // Пытаемся восстановить состояние: reload() чтобы снова иметь рабочий instance.
+            if (!loader->load()) {
+                qWarning() << "[Plugin] reload also failed for" << path << "error:" << loader->errorString();
+            } else {
+                QObject* inst2 = loader->instance();
+                GameInterface* iface2 = inst2 ? qobject_cast<GameInterface*>(inst2) : nullptr;
+                pluginsInterface[index] = iface2; // восстанавливаем указатель, если удалось загрузить
+            }
+            return;
+        }
+    }
+
+    // ---------- 4) Всё успешно — чистим контейнеры/интерфейсы ----------
+    // QPluginLoader уже выгрузил библиотеку (unload), мы можем удалить объект загрузчика.
+    delete loader;
+
+    // Удаляем записи о плагине из внутренних структур в строго согласованном порядке:
+    // namePlugin (UI список имен), pluginsInterface, pluginsLoad, filePaths.
+    // Важно: порядок одинаковый во всех векторах — index указывает на один и тот же плагин.
+    mw->namePlugin.removeAt(index);
+    pluginsInterface.removeAt(index);
+    pluginsLoad.removeAt(index);
+    filePaths.removeAt(index);
+
+    // Удаляем элемент QListWidget (строку) — если был передан.
+    if (item) {
+        delete item; // безопасно: item удаляем, он убирается из QListWidget
+    }
+
+    QMessageBox::information(this, tr("Success!"), tr("Плагин удалён."));
+}
+
+// ============================================================================
+// updatePlug — обновление списка плагинов (вызывается из Manager)
+// ----------------------------------------------------------------------------
+// Подсказка: здесь важно соблюдать порядок действий для согласованности UI и внутренних структур:
+//  - Сохраняем старый список плагинов, чтобы корректно подсчитать добавленные новые.
+//  - Utilities::clearItems удаляет элементы из QListWidget и обновляет внутренние вектора, предотвращая дубли.
+//  - loadPlugin() может вернуть false — в этом случае уведомляем пользователя и выходим.
+//  - После успешной загрузки обновляем внутренние списки и UI через mw->updateLists().
+//  - Только после обновления списка отображаем сообщение с количеством новых плагинов.
+// ============================================================================
+void TopWindow::updatePlug()
+{
+    // ---------- 0) Сохраняем текущий список плагинов ----------
+    // Используется для подсчёта добавленных новых плагинов
+    int currentPlugSize = mw->namePlugin.size();
+
+    // ---------- 1) Очищаем элементы UI и внутренние вектора ----------
+    Utilities::clearItems(mw->getPlugList(), mw->getPlugList2(), mw->namePlugin);
+
+    // ---------- 2) Загружаем новые плагины ----------
+    if (!loadPlugin())
+    {
+        // Если загрузка не удалась — показываем сообщение и выходим
+        QMessageBox::information(this, tr("Ошибка!"), tr("Не удалось загрузить плагин!"));
+        return;
+    }
+
+    // ---------- 3) Вычисляем количество добавленных плагинов ----------
+    int updatePlugSize = mw->namePlugin.size();
+    int resultUpdate = updatePlugSize - currentPlugSize;
+
+    // ---------- 4) Формируем информационное сообщение ----------
+    QString result = "Добавлено " + QString::number(resultUpdate) + " игр!";
+
+    // ---------- 5) Обновляем внутренние списки и UI ----------
+    mw->updateLists();
+
+    // ---------- 6) Показываем информационное окно пользователю ----------
+    QMessageBox::information(this, tr("Info!"), result);
+}
+
+// ============================================================================
+// againGame — перезапуск текущей игры (вызывается из Manager)
+// ----------------------------------------------------------------------------
+// Подсказка: важно корректно сбросить старый игровой интерфейс и отключить слоты,
+// чтобы старый плагин больше не обрабатывал ввод пользователя:
+//  - Сбрасываем указатель gameInterface на nullptr, чтобы предотвратить доступ к старой игре.
+//  - Отключаем слот runGame от Enter в поле ввода, иначе старый плагин будет реагировать на события.
+//  - Вызываем onPlugSelected(currentItem) для повторной инициализации текущего плагина:
+//      - gameInterface заново устанавливается,
+//      - слот runGame подключается к Enter,
+//      - headerText обновляется.
+// ============================================================================
+void TopWindow::againGame()
+{
+    // ---------- 0) Сброс текущей игры ----------
+    // Обнуляем указатель на текущий игровой интерфейс,
+    // чтобы старый плагин больше не обрабатывал ввод
+    gameInterface = nullptr;
+
+    // ---------- 1) Отключаем обработку Enter в поле ввода ----------
+    // Если пользователь нажимает Enter, слот runGame больше не будет вызываться для старой игры
+    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+
+    // ---------- 2) Перезапуск игры ----------
+    // Повторно выбираем текущий плагин из списка, чтобы инициализировать его заново
+    // onPlugSelected установит gameInterface, подключит слот runGame и обновит headerText
+    onPlugSelected(currentItem);
+}
+
+// ============================================================================
+// Перезагрузка списка плагинов: scan plugins folder и загружаем все рабочие плагины
+// ----------------------------------------------------------------------------
+// loadPlugin() очищает старое состояние и наполняет внутренние вектора заново.
+// Обратите внимание на порядок: mw->namePlugin, filePaths, pluginsLoad, pluginsInterface.
+// ============================================================================
+bool TopWindow::loadPlugin()
+{
+
+    // ---------- Очистка старого состояния ----------
+    // mw->namePlugin: список отображаемых имён — Manager::updateLists читает именно его.
+    mw->namePlugin.clear();
+
+    // pluginsInterface: вектор сырых указателей на интерфейс (не владеем объектом)
+    pluginsInterface.clear();
+
+    // DeleteAll(pluginsLoad): пользовательская утилита, которая delete'ит все QPluginLoader* и очищает вектор.
+    // Это важно: если не удалить старые QPluginLoader-ы, они будут держать DLL в памяти.
+    // Utilities::DeleteAll<QPluginLoader>(pluginsLoad);
+    for(auto& loader : pluginsLoad) {
+        if(loader->instance()) loader->instance()->disconnect();
+        loader->unload();
+        delete loader;
+    }
+
+    // filePaths: пути к каждому плагину
+    filePaths.clear();
+
+    // Переходим в папку plugins (относительно applicationDirPath)
+    QDir pluginsDir(QCoreApplication::applicationDirPath());
+    if (!pluginsDir.cd("plugins"))
+        return false;
+
+    // Перечисляем файлы в каталоге (QDir::Files)
+    const QStringList entries = pluginsDir.entryList(QDir::Files);
+    for (const QString& fileName : entries)
+    {
+#ifdef Q_OS_WIN
+        // Фильтруем по расширению DLL на Windows
+        if(!fileName.endsWith(".dll", Qt::CaseInsensitive)) {continue;}
+#else
+        // Логика для Linux/macOS при необходимости: .so / .dylib
+#endif
+
+        const QString fullPath = pluginsDir.absoluteFilePath(fileName);
+
+        // Создаём QPluginLoader без parent (мы сами будем управлять временем жизни loader)
+        QPluginLoader* loader = new QPluginLoader(fullPath);
+
+        // instance() попытается загрузить плагин и вернуть объект-инстанс.
+        // Если плагин не загрузился — instance == nullptr.
+        QObject* instance = loader->instance();
+
+        if (!instance) {
+            // Сообщаем в лог почему не удалось загрузить конкретный файл.
+            qWarning() << "[Plugin] load failed for" << fullPath << "error:" << loader->errorString();
+            delete loader;
+            continue;
+        }
+
+        // Читаем MetaData для отображаемого имени плагина (опционально).
+        QJsonObject meta = loader->metaData().value("MetaData").toObject();
+        QString displayName = meta.value("name").toString();
+        if(displayName.isEmpty()) displayName = fileName;
+
+        // Пробуем привести instance к нашему интерфейсу GameInterface
+        GameInterface* iface = qobject_cast<GameInterface*>(instance);
+        if (!iface) {
+            // Плагин не реализует требуемый интерфейс — выгружаем и освобождаем loader.
+            qWarning() << "[Plugin] doesn't implement GameInterface:" << fullPath;
+            loader->unload(); // пытаемся корректно выгрузить
+            delete loader;
+            continue;
+        }
+
+        // Всё успешно — сохраняем информацию о плагине.
+        // ВАЖНО: порядок векторов должен совпадать — index указывает на одну и ту же сущность.
+        mw->namePlugin.push_back(displayName);
+        filePaths.push_back(fullPath);
+        pluginsLoad.push_back(loader);
+        pluginsInterface.push_back(iface);
+    }
+
+    return !pluginsLoad.isEmpty();
+}
+
+// ============================================================================
+// createActionsName: настройка действий (QAction), хоткеев и подсказок
+// ----------------------------------------------------------------------------
+// Здесь setShortcut/setStatusTip + некоторые connect'ы. Комментарии лишь про подсказки
+// и что нужно держать в уме при изменении хоткеев.
+// ============================================================================
 void TopWindow::createActionsName()
 {
     ui->gameManager->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_M));
@@ -158,66 +517,41 @@ void TopWindow::createActionsName()
     ui->findOutput->setStatusTip(tr("Текущий способ вывода"));
 }
 
-bool TopWindow::loadPlugin()
-{
-    QDir pluginsDir(QCoreApplication::applicationDirPath());
-    pluginsInterface.clear();
-    pluginsLoad.clear();
-    pluginsDir.cd("plugins");
-    const QStringList entries = pluginsDir.entryList(QDir::Files);
-    for (const QString& fileName : entries)
-    {
-        if(!fileName.endsWith(".dll", Qt::CaseInsensitive)) {continue;}
-        QString fullPath = pluginsDir.absoluteFilePath(fileName);
-        QPluginLoader* pluginLoad = new QPluginLoader(fullPath, this);
-        QObject* plugin = pluginLoad->instance();
-
-        QJsonObject meta = pluginLoad->metaData().value("MetaData").toObject();
-        QString displayName = meta.value("name").toString();
-        if(displayName.isEmpty())
-            displayName = fileName;
-
-        if(!plugin)
-        {
-            delete pluginLoad;
-            continue;
-        }
-
-        mw->namePlugin.push_back(displayName);
-
-        gameInterface = qobject_cast<GameInterface*>(plugin);
-        if(gameInterface)
-        {
-            pluginsLoad.push_back(pluginLoad);
-            pluginsInterface.push_back(gameInterface);
-        }
-        else
-        {
-            delete pluginLoad;
-            continue;
-        }
-    }
-
-    return !pluginsLoad.isEmpty();
-}
-
+// ============================================================================
+// Утилита: вывод текста в виджет и установка фокуса
+// ----------------------------------------------------------------------------
+// qobject_cast<QPlainTextEdit*> безопасно проверяет тип.
+// ============================================================================
 void TopWindow::announceSetText(QWidget *widget, const QString &text)
 {
+    // ---------- 0) Проверяем, что виджет является QPlainTextEdit ----------
     if (auto* plain = qobject_cast<QPlainTextEdit*>(widget))
     {
+        // ---------- 1) Устанавливаем текст в виджет ----------
         plain->setPlainText(text);
+
+        // ---------- 2) Делаем виджет активным ----------
         plain->setFocus();
-        if(talk_.currentReader() == "")
+
+        // ---------- 3) Озвучивание текста ----------
+        if (talk_.currentReader() == "")
         {
+            // Если текущий скринридер не определён, используем запасной NVDA
             talkNVDA_.speakWithFallback(ui->headerText, text);
         }
         else
         {
+            // Иначе выводим текст через JAWS/Narrator
             talk_.output(text, true);
         }
     }
 }
 
+// ============================================================================
+// Загрузка справки из ресурса reference.json
+// ----------------------------------------------------------------------------
+// Формат ожидается: { "reference": "текст" }
+// ============================================================================
 QString TopWindow::loadReferenceFromJson()
 {
     QFile file(":/reference.json");
@@ -240,86 +574,141 @@ QString TopWindow::loadReferenceFromJson()
     return obj.value("reference").toString();
 }
 
+// ============================================================================
+// Открытие окна менеджера плагинов
+// ----------------------------------------------------------------------------
+// Тут важно: manager окно modal/non-modal, фокус ставим асинхронно (singleShot)
+// чтобы избежать двойного озвучивания/двойного выделения.
+// ============================================================================
 void TopWindow::managerOpen()
 {
+    // Останавливаем озвучку, чистим поле ввода
     talkNVDA_.stopSpeak();
     ui->enterText->clear();
+    gameInterface = nullptr;
+    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+
+    // При закрытии менеджера возвращаем справочный текст в headerText
     connect(mw.get(), &Manager::closeManagerWindow, this, [this](){
-            announceSetText(ui->headerText, reference);
+        announceSetText(ui->headerText, reference);
     });
-    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+
+    // Отвязываем отправку Enter'ом, потому что менеджер будет обрабатывать некоторые нажатия
+    disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+
+    // Показываем менеджер и ставим фокус
     mw->show();
     mw->setFocus();
+
+    // Через 300 мс ставим фокус на список и выделяем первую строку (если есть).
+    // Причина: сразу после show() список может не получить фокус корректно, поэтому используем singleShot.
     QTimer::singleShot(300, [=]()
                        {
                            mw->getPlugList()->setFocus();
-                           mw->getPlugList()->setCurrentRow(0);
-                       }); // асинхронно ставим фокус, для выделения первой строки списка и убираем этим двойное проговаривание менеджер игр окно
-    talkNVDA_.speakTextNVDA(mw->namePlugin[0]);
+                           if(mw->getPlugList()->count() != 0) { mw->getPlugList()->setCurrentRow(0); }
+                       });
+
+    // Озвучиваем первое имя плагина — защищаемся проверкой isEmpty
+    if(!mw->namePlugin.isEmpty())
+        talkNVDA_.speakTextNVDA(mw->namePlugin[0]);
 }
 
+// ============================================================================
+// Выход из приложения
+// ============================================================================
 void TopWindow::exit()
 {
+    Utilities::clearTombstone("plugins"); //Утилита удаления мусора
     QApplication::quit();
 }
 
-void TopWindow::sendEcho()
+// ============================================================================
+// Отправка текста в плагин (нажатие Enter в поле ввода)
+// ----------------------------------------------------------------------------
+// runGame использует gameInterface, поэтому нужно убедиться, что он установлен.
+// ============================================================================
+void TopWindow::runGame()
 {
     if(!gameInterface) return;
 
-
+    // Печатаем введённый текст (в header или в enterText — announceSetText использует QPlainTextEdit)
     announceSetText(ui->enterText, ui->enterText->text());
+
+    // Получаем ответ от плагина; gameInput реализует логику игры
     QString text = gameInterface->gameInput(ui->enterText->text());
     ui->enterText->clear();
 
+    // Если игра закончена — отключаем обработчик ввода и возвращаем справку
     if(gameInterface->isOver())
     {
         QMessageBox::information(this, "End game", tr("Спасибо за игру!"));
         ui->enterText->clear();
+        gameInterface = nullptr;
         announceSetText(ui->headerText, reference);
-        disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::sendEcho);
+        disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
         return;
     }
 
+    // Иначе отображаем ответ игры
     announceSetText(ui->headerText, text);
 }
 
+// ============================================================================
+// Перехват нажатий клавиш в окне TopWindow
+// ----------------------------------------------------------------------------
+// Обрабатываем Enter — переводим фокус в headerText, служебные клавиши — игнорируем.
+// ============================================================================
 void TopWindow::keyPressEvent(QKeyEvent *ev)
 {
+    // Если нажали Enter/Return — переводим фокус в headerText (так сделано в оригинале)
     if (ev->key() == Qt::Key_Return || ev->key() == Qt::Key_Enter)
     {
         ui->headerText->setFocus();
         return;
     }
 
+    // Защита: не мешаем стандартным Ctrl+A, используем проверку сочетания.
     if(ev->modifiers() == Qt::Key_Control && ev->key() == Qt::Key_A)
     {
         return;
     }
+
+    // Игнорируем «чисто» аппаратные клавиши (shift/ctrl/alt/капс)
     if(ev->text().isEmpty() &&
         (ev->key() == Qt::Key_Shift ||
-        ev->key() == Qt::Key_Control ||
-        ev->key() == Qt::Key_Alt ||
-        ev->key() == Qt::Key_CapsLock))
+         ev->key() == Qt::Key_Control ||
+         ev->key() == Qt::Key_Alt ||
+         ev->key() == Qt::Key_CapsLock))
     {
         return;
     }
 
+    // Во всех остальных случаях переводим фокус в поле ввода (ui->enterText)
     ui->enterText->setFocus();
+
+    // Обновляем информацию системы доступности (чтобы экранный читалка знал о новом фокусе)
     QAccessibleEvent aEvent(ui->enterText, QAccessible::Focus);
     QAccessible::updateAccessibility(&aEvent);
 
+    // Если есть текстовый символ — вставляем его в поле ввода
     if(!ev->text().isEmpty()) ui->enterText->insert(ev->text());
 }
 
+// ============================================================================
+// Фильтр событий для headerText
+// ----------------------------------------------------------------------------
+// Позволяет контролировать навигационные клавиши/копирование и т.д.
+// ============================================================================
 bool TopWindow::eventFilter(QObject *obj, QEvent *event)
 {
+    // Отлавливаем только keypress'ы целевого виджета ui->headerText
     if(obj == ui->headerText && event->type() == QEvent::KeyPress)
     {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
         if (obj == ui->headerText)
         {
+            // Если держим Ctrl — даём стандартную обработку для сочетаний (Ctrl+A/C/V и т.д.)
             if(keyEvent->modifiers() == Qt::ControlModifier)
             {
                 switch(keyEvent->key())
@@ -328,9 +717,10 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
                 case Qt::Key_Z:
                 case Qt::Key_C:
                     QMainWindow::keyPressEvent(keyEvent);
-                    return false;
+                    return false; // позволяем дальнейшую обработку
                 }
             }
+            // Навигационные клавиши — не мешаем им (например, PgUp/PgDown/стрелки и т.д.)
             switch(keyEvent->key())
             {
             case Qt::Key_Up:
@@ -339,15 +729,17 @@ bool TopWindow::eventFilter(QObject *obj, QEvent *event)
             case Qt::Key_Right:
             case Qt::CTRL:
             case Qt::Key_Home:
-                return false;
+                return false; // стандартная обработка
                 break;
             default:
+                // Для всех прочих клавиш переиспользуем QMainWindow::keyPressEvent и заявляем,
+                // что событие обработано (не передаём дальше).
                 QMainWindow::keyPressEvent(keyEvent);
                 return true;
                 break;
             }
         }
     }
+    // Во всех остальных случаях используем стандартный фильтр событий базового класса
     return QMainWindow::eventFilter(obj, event);
 }
-

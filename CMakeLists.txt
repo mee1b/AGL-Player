@@ -38,7 +38,9 @@ add_executable(AGL-Manager
     resources.qrc
     NVDAController.h
     NVDAController.cpp
-
+    utilities.h
+    utilities.cpp
+    TODO.txt
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>705</width>
+    <width>800</width>
     <height>454</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>705</width>
+    <width>800</width>
     <height>454</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>705</width>
+    <width>800</width>
     <height>454</height>
    </size>
   </property>
@@ -26,6 +26,42 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QPushButton" name="b_StartGame">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Играть (ENTER)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QPushButton" name="b_Delete">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Удалить (DEL)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QPushButton" name="b_LastSaveContin">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::FocusPolicy::StrongFocus</enum>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LayoutDirection::LeftToRight</enum>
+     </property>
+     <property name="text">
+      <string>Продолжить последнюю игру (F3)</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0" colspan="4">
     <widget class="QTabWidget" name="switchGame">
      <property name="currentIndex">
@@ -65,32 +101,6 @@
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QPushButton" name="b_StartGame">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Играть (ENTER)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QPushButton" name="b_LastSaveContin">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::FocusPolicy::StrongFocus</enum>
-     </property>
-     <property name="layoutDirection">
-      <enum>Qt::LayoutDirection::LeftToRight</enum>
-     </property>
-     <property name="text">
-      <string>Продолжить последнюю игру (F3)</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="2">
     <widget class="QPushButton" name="b_Updata">
      <property name="enabled">
@@ -101,16 +111,6 @@
      </property>
      <property name="text">
       <string>Обновить данные (F5)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="3">
-    <widget class="QPushButton" name="b_Delete">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Удалить (DEL)</string>
      </property>
     </widget>
    </item>
