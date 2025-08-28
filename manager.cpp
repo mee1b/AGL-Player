@@ -1,5 +1,6 @@
 #include "manager.h"
 #include "ui_manager.h"
+#include "LoggerMacros.h"
 
 // -------------------------
 // Файл: manager.cpp
@@ -63,7 +64,12 @@ Manager::~Manager()
 //  - namePlugin должен быть согласован с теми коллекциями, которыми управляет TopWindow.
 void Manager::updateLists()
 {
-    if(namePlugin.empty()) return;
+    LOG_FUNC_START();
+    if(namePlugin.empty())
+    {
+        LOG_INFO(QString("Список плагинов пуст!"));
+        return;
+    }
 
     // Для каждого имени создаём элемент в обоих списках интерфейса.
     for(const auto& plugin : namePlugin)
@@ -71,6 +77,7 @@ void Manager::updateLists()
         ui->plugList->addItem(plugin);
         ui->plugList_2->addItem(plugin);
     }
+    LOG_FUNC_END(QString("Список плагинов обновлен!"));
 }
 
 // Возвращаем указатель на QListWidget, чтобы внешний код (TopWindow) мог с ним работать.
@@ -99,20 +106,29 @@ void Manager::keyPressEvent(QKeyEvent* event)
 // Логика:
 //  - Проверяем, есть ли выбранный элемент. Если нет — показываем сообщение.
 //  - Берём текущий элемент и эмитим сигнал itemActivated этого списка.
-//    в TopWindow  подключается к сигналу itemActivated.
+//    Это удобно, если наружный код подписан на itemActivated (в TopWindow
+//    у тебя действительно подключается к сигналу itemActivated).
 //  - Скрываем менеджер (он модален, поэтому можно прятать его, чтобы вернуться в приложение).
 void Manager::s_StartGame()
 {
-    if(ui->plugList->currentItem() == nullptr) {
-        QMessageBox::information(this, tr("Info"), tr("Игра не установлена!"));
-        return;
-    }
+    LOG_FUNC_START();
     QListWidgetItem* item = ui->plugList->currentItem();
 
+    if(item == nullptr)
+    {
+        QMessageBox::information(this, tr("Info"), tr("Игра не установлена!"));
+        LOG_INFO(QString("Плагин не обнаружен!"));
+        return;
+    }
+
+    // ВАЖНО: здесь мы переиспользуем сигнал самого QListWidget-а — это нормально,
+    // но можно также эметить собственный сигнал (например pluginSelected(item))
+    // чтобы не полагаться на внешний объект.
     emit ui->plugList->itemActivated(item);
 
     // Скрываем менеджер — управление продолжится в внешнем коде (TopWindow)
     this->hide();
+    LOG_FUNC_END(QString("Сигнал активации плагина передан!"));
 }
 
 // s_Delete — слот удаления плагина.
@@ -122,17 +138,40 @@ void Manager::s_StartGame()
 //    В TopWindow этот сигнал перехватывается и выполняется фактическое удаление.
 void Manager::s_Delete()
 {
-    if(ui->plugList->currentItem() == nullptr) {
-        QMessageBox::information(this, tr("Info"), tr("Игра не установлена!!"));
+    LOG_FUNC_START();
+    if(namePlugin.size() < 2)
+    {
+        LOG_WARN(QString("Пока что нельзя удалить все плагины!"));
+        QMessageBox::information(this, tr("Info"), tr("Пока что нельзя удалить все плагины!"));
         return;
     }
-    //Сделать модалку с вопросом "Удалить игру?"
-    //if(accept)
     QListWidgetItem* item = ui->plugList->currentItem();
+    if(item == nullptr)
+    {
+        QMessageBox::information(this, tr("Info"), tr("Игра не установлена!!"));
+        LOG_INFO(QString("Плагин не обнаружен!"));
+        return;
+    }
 
-    // Мы не удаляем item напрямую в Manager — Manager просто сообщает внешнему
-    // коду, какой элемент нужно удалить, а TopWindow делает безопасность удаления.
-    emit deletePlugin(item);
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this,
+                                  tr("Подтверждение"),  // заголовок окна
+                                  tr("Удалить игру?"),   // текст сообщения
+                                  QMessageBox::Ok | QMessageBox::Cancel);
+
+    if (reply == QMessageBox::Ok)
+    {
+        // Мы не удаляем item напрямую в Manager — Manager просто сообщает внешнему
+        // коду, какой элемент нужно удалить, а TopWindow делает безопасность удаления.
+        LOG_INFO(QString("Удаляем плагин: " + item->text()));
+        emit deletePlugin(item);
+        LOG_FUNC_END(QString("Сигнал удаления плагина передан!"));
+    }
+    else
+    {
+        LOG_FUNC_END(QString("Отмена удаления!"));
+        return;
+    }
 }
 
 // s_Update — слот "Обновить".
@@ -142,17 +181,31 @@ void Manager::s_Delete()
 //    В TopWindow этот сигнал перехватывается и выполняется фактическое обновление.
 void Manager::s_Update()
 {
-    //Сделать модалку с вопросом "Обновить список игр?"
-    //if(accept)
-    emit update();
-    //else
-    //return
+    LOG_FUNC_START();
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this,
+                                  tr("Подтверждение"),  // заголовок окна
+                                  tr("Обновить список игр?"),   // текст сообщения
+                                  QMessageBox::Ok | QMessageBox::Cancel);
+
+    if (reply == QMessageBox::Ok)
+    {
+        // Мы не обновляем напрямую в Manager — Manager просто сообщает внешнему TopWindow
+        emit update();
+        LOG_FUNC_END(QString("Сигнал обновления плагинов передан!"));
+    }
+    else
+    {
+        LOG_FUNC_END(QString("Отмена обновления!"));
+        return;
+    }
 }
 
 // s_LastSaveContin — заглушка для кнопки "Продолжить с последнего сохранения".
 void Manager::s_LastSaveContin()
 {
     QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
+    LOG_WARN(QString("Не реализовано!"));
 }
 
 // closeEvent — переопределён, чтобы прокинуть сигнал closeManagerWindow при закрытии.

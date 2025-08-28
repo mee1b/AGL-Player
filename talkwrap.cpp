@@ -1,4 +1,5 @@
 #include "talkwrap.h"  // Подключаем свой заголовок с объявлением класса TalkWrap
+#include "LoggerMacros.h"
 
 // ======================
 // Блок заглушек, если не используется talk.dll
@@ -8,7 +9,7 @@
 // чтобы код, который его использует, компилировался, но ничего не делал.
 
 // Конструктор — создаёт объект с пустым reader_ и valid_ = false
-TalkWrap::TalkWrap() : reader_(), valid_(false) {}
+TalkWrap::TalkWrap() : reader_(), valid_(false) { LOG_ERR(QString("talk.dll не загружена!"));}
 
 // Возвращает имя текущего screen reader'а. Так как DLL не используется — всегда пусто.
 QString TalkWrap::currentReader() const {
@@ -32,15 +33,16 @@ TalkWrap::~TalkWrap() {}
 // ======================
 static QString initTalkDll()
 {
+    LOG_FUNC_START();
     Tolk_Load(); // Загружаем DLL (инициализация)
 
     // Выводим информацию о статусе DLL и поддержке речи
-    qDebug() << "[Tolk] DLL loaded: "
-             << Tolk_IsLoaded()            // Загружена ли DLL?
-             << '\n'
-             << Tolk_DetectScreenReader()  // Определяет, какой скринридер активен
-             << '\n'
-             << Tolk_HasSpeech();          // Поддерживает ли озвучку
+    LOG_INFO(QString("[Tolk] DLL loaded: "
+             + Tolk_IsLoaded()            // Загружена ли DLL?
+             + '\n'
+             + QString(Tolk_DetectScreenReader())  // Определяет, какой скринридер активен
+             + '\n'
+             + QString::number(Tolk_HasSpeech())));          // Поддерживает ли озвучку
 
     Tolk_PreferSAPI(false); // Настройка использования SAPI (False = не использовать SAPI, только нативные драйверы)
 
@@ -49,18 +51,19 @@ static QString initTalkDll()
     if (win_name) // Если найден активный драйвер
     {
         QString name = QString::fromStdWString(win_name); // Конвертируем wide-string в QString
-        qDebug() << "Talk: the active screen reader driver is: " << name;
+        LOG_INFO(QString("Talk: the active screen reader driver is: " + name));
 
         if (!Tolk_HasSpeech()) // Проверяем, поддерживает ли драйвер озвучку
         {
-            qDebug() << "Talk: error! Driver not support speech output! ";
+            LOG_ERR(QString("Talk: error! Driver not support speech output!"));
             return QString(); // Возвращаем пустую строку — речи нет
         }
+        LOG_FUNC_END(QString("Скрин ридер определен!"));
         return name; // Возвращаем имя найденного screen reader
     }
 
     // Если ни один поддерживаемый screen reader не запущен
-    qDebug() << "Talk: none of the supported screen readers is running";
+    LOG_WARN(QString("Talk: none of the supported screen readers is running"));
     return QString(); // Возвращаем пустую строку
 }
 
@@ -84,6 +87,7 @@ QString TalkWrap::currentReader() const
 // ======================
 void TalkWrap::output(const QString &text, bool interrupt)
 {
+    LOG_FUNC_START();
     // Если DLL успешно загружена и текст не пустой
     if (valid_ && !text.isEmpty())
     {

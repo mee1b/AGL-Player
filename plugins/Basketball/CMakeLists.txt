@@ -30,8 +30,8 @@ target_compile_definitions(Basketball PRIVATE BASKETBALL_LIBRARY)
 
 add_custom_command(TARGET Basketball POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
-        $<TARGET_FILE_DIR:AGL-Manager>/plugins
+        $<TARGET_FILE_DIR:AGL-Player>/plugins
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:Basketball>
-        $<TARGET_FILE_DIR:AGL-Manager>/plugins
+        $<TARGET_FILE_DIR:AGL-Player>/plugins
 )

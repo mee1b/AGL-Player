@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(AGL-Manager VERSION 0.1 LANGUAGES CXX)
+project(AGL-Player VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -24,7 +24,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   add_subdirectory(talk)
 endif()
 
-add_executable(AGL-Manager
+find_package(Qt6 REQUIRED COMPONENTS Core)
+
+add_executable(AGL-Player
     ${PROJECT_SOURCES}
     talkwrap.h
     talkwrap.cpp
@@ -38,20 +40,22 @@ add_executable(AGL-Manager
     resources.qrc
     NVDAController.h
     NVDAController.cpp
-    utilities.h
-    utilities.cpp
-    TODO.txt
+    utilities.h utilities.cpp
+    logger.h
+    LoggerMacros.h
+
+
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_definitions(AGL-Manager PRIVATE USE_TALK_DLL)
-    target_link_libraries(AGL-Manager PRIVATE Talk)
+    target_compile_definitions(AGL-Player PRIVATE USE_TALK_DLL)
+    target_link_libraries(AGL-Player PRIVATE Talk)
 endif()
 
 
 add_subdirectory(plugins)
 
-target_include_directories(AGL-Manager PRIVATE plugins/echo)
+target_include_directories(AGL-Player PRIVATE plugins/echo)
 
 
 find_path(ECHO_INCLUDE_DIR echo.h)
@@ -61,9 +65,9 @@ if (ECHO_INCLUDE_DIR AND ECHO_LIBRARY)
     include_directories(${ECHO_INCLUDE_DIR})
     set(PATH_TO_MY_LIB ${PATH_TO_MY_LIB} ${ECHO_LIBRARY})
 endif()
-target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_MY_LIB})
+target_link_libraries(AGL-Player PRIVATE ${PATH_TO_MY_LIB})
 
-target_include_directories(AGL-Manager PRIVATE plugins/Basketball)
+target_include_directories(AGL-Player PRIVATE plugins/Basketball)
 find_path(BASKETBALL_INCLUDE_DIR basketball.h)
 find_library(BASKETBALL_LIBRARY libBasketball.dll)
 if (BASKETBALL_INCLUDE_DIR AND BASKETBALL_LIBRARY)
@@ -71,20 +75,21 @@ if (BASKETBALL_INCLUDE_DIR AND BASKETBALL_LIBRARY)
     include_directories(${BASKETBALL_INCLUDE_DIR})
     set(PATH_TO_BASKETBALL_LIB ${PATH_TO_BASKETBALL_LIB} ${BASKETBALL_LIBRARY})
 endif()
-target_link_libraries(AGL-Manager PRIVATE ${PATH_TO_BASKETBALL_LIB})
+target_link_libraries(AGL-Player PRIVATE ${PATH_TO_BASKETBALL_LIB})
 
-target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
-target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Test)
-target_link_libraries(AGL-Manager PRIVATE Qt${QT_VERSION_MAJOR}::Gui)
+target_link_libraries(AGL-Player PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(AGL-Player PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+target_link_libraries(AGL-Player PRIVATE Qt${QT_VERSION_MAJOR}::Gui)
+target_link_libraries(AGL-Player PRIVATE Qt6::Core)
 
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.AGL-Manager)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.AGL-Player)
 endif()
-set_target_properties(AGL-Manager PROPERTIES
+set_target_properties(AGL-Player PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -93,12 +98,12 @@ set_target_properties(AGL-Manager PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS AGL-Manager
+install(TARGETS AGL-Player
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(AGL-Manager)
+    qt_finalize_executable(AGL-Player)
 endif()

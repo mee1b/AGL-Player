@@ -1,5 +1,7 @@
-#include "utilities.h"
 #include <QDir>
+
+#include "utilities.h"
+
 
 // ============================================================================
 // Утилита: clearTombstone
@@ -9,6 +11,7 @@
 // ============================================================================
 void Utilities::clearTombstone(const QString& dirName)
 {
+    LOG_FUNC_START();
     // Создаём объект QDir для папки с названием dirName
     QDir pluginsDir(dirName);
 
@@ -19,42 +22,51 @@ void Utilities::clearTombstone(const QString& dirName)
     // Перебираем каждый файл из списка
     for(auto& file : tombstone)
     {
+        LOG_INFO(QString(file + " удален!"));
         // Удаляем файл с диска, получая его полный путь через pluginsDir.absoluteFilePath(file)
         QFile::remove(pluginsDir.absoluteFilePath(file));
     }
+    LOG_FUNC_END(QString("'Мусорные' файлы прошлой сессии удалены!"));
 }
 
-// ============================================================================
-// Утилита: clearItems
-// ----------------------------------------------------------------------------
-// Удаляет элементы из двух QListWidget синхронно по списку имён.
-// Важно для корректного обновления UI и внутренних векторов плагинов:
-//  - wid и wid2 должны содержать элементы в одинаковом порядке.
-//  - names содержит список имён плагинов, которые нужно удалить.
-//  - элементы удаляются с конца, чтобы избежать смещения индексов при удалении.
-// ============================================================================
+//  Utilities::clearItems
+//  Удаляет элементы из двух QListWidget по именам из вектора names.
+//  *
+//  Функция проходит по вектору names и сравнивает каждый элемент с последним
+//  элементом QListWidget. Если совпадение найдено, элемент удаляется из обоих виджетов.
+//  *
+//  wid Первый QListWidget, из которого удаляются элементы.
+//  wid2 Второй QListWidget, из которого удаляются элементы.
+//  names Вектор имен элементов, которые нужно удалить.
 
-void Utilities::clearItems(QListWidget* wid, QListWidget* wid2, const QVector<QString>& names)
+void Utilities::clearItems(QListWidget* wid, QListWidget* wid2, QVector<QString> names)
 {
-    // Начинаем с последнего индекса списка имён
+    LOG_FUNC_START(); // Начало функции
+
+    // Проверка валидности указателей
+    if(wid == nullptr || wid2 == nullptr)
+    {
+        LOG_ERR(QString("Невалидные указатель/ли QListWidget!"));
+        return;
+    }
+
+    // Индекс последнего элемента в векторе names
     int size = static_cast<int>(names.size()) - 1;
 
-    // Проходим по именам в обратном порядке
+    // Проходим по всем именам
     for(const auto& name : names)
     {
-        if(size < 0) { break; }
+        if(size < 0) { break; } // Если индекс вышел за пределы — прерываем цикл
 
-        // Если имя совпадает с элементом в wid на позиции size
+        // Сравниваем имя с элементом QListWidget
         if(name == wid->item(size)->text())
         {
-            // Удаляем элементы из обоих QListWidget
-            delete wid->item(size);
-            delete wid2->item(size);
-
-            // Уменьшаем индекс
-            --size;
+            LOG_INFO(QString(name + " удален!")); // Логируем удаление
+            delete wid->item(size);   // Удаляем из первого виджета
+            delete wid2->item(size);  // Удаляем из второго виджета
+            --size;                   // Переходим к предыдущему элементу
         }
-        //Если не совпадает имя, выходим из цикла. Возможно сделать bool, чтобы обрабатывать результат
-        else { break; }
     }
+
+    LOG_FUNC_END(QString("QListWidgets очищены!")); // Конец функции
 }

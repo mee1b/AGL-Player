@@ -25,8 +25,8 @@ target_compile_definitions(echo PRIVATE ECHO_LIBRARY)
 
 add_custom_command(TARGET echo POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
-        $<TARGET_FILE_DIR:AGL-Manager>/plugins
+        $<TARGET_FILE_DIR:AGL-Player>/plugins
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:echo>
-        $<TARGET_FILE_DIR:AGL-Manager>/plugins
+        $<TARGET_FILE_DIR:AGL-Player>/plugins
 )

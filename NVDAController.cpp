@@ -4,7 +4,9 @@
 #include <QDebug>            // Для отладочного вывода (qDebug, qWarning).
 #include <QAccessible>       // Поддержка доступности в Qt.
 #include <QAccessibleEvent>  // События доступности в Qt.
+
 #include "NVDAController.h"  // Заголовок для функций NVDA (определение типов функций DLL).
+#include "LoggerMacros.h"
 
 // ======================
 // Класс Speaker — отвечает за озвучку текста через NVDA.
@@ -38,11 +40,11 @@ Speaker::~Speaker()
 // ======================
 bool Speaker::loadNVDA()
 {
+    LOG_FUNC_START();
     // Загружаем DLL.
     if(!m_nvdaLib.load())
     {
-        qWarning() << "Не загрузилась nvdaControllerClient64.dll:"
-                   << m_nvdaLib.errorString(); // Выводим ошибку если не загрузилась.
+        LOG_ERR(QString("Не загрузилась nvdaControllerClient64.dll:" + m_nvdaLib.errorString())); // Выводим ошибку если не загрузилась.
         return false;
     }
 
@@ -51,12 +53,12 @@ bool Speaker::loadNVDA()
 
     if(!m_speakTextFunc) // Если функция не найдена.
     {
-        qWarning() << "Не загрузилось NVDAController_speakText function in DLL";
+        LOG_ERR(QString("Не загрузилось NVDAController_speakText function in DLL"));
         m_nvdaLib.unload(); // Выгружаем библиотеку.
         return false;
     }
 
-    qDebug() << "Все окей! NVDA!"; // Сообщаем, что библиотека успешно загружена.
+    LOG_FUNC_END(QString("Все окей! NVDA!")); // Сообщаем, что библиотека успешно загружена.
     return true;
 }
 
@@ -66,10 +68,11 @@ bool Speaker::loadNVDA()
 // ======================
 void Speaker::speakTextNVDA(const QString &text)
 {
+    LOG_FUNC_START();
     if(!m_speakTextFunc) // Если функция не найдена → озвучка невозможна.
     {
-        ++i; // Счётчик ошибок (видимо отладочный).
-        qWarning() << "NVDA speak недоступна" << i;
+        ++i; // Счётчик ошибок.
+        LOG_WARN(QString("NVDA speak недоступна!"));
         return;
     }
 
@@ -78,13 +81,14 @@ void Speaker::speakTextNVDA(const QString &text)
 
     if(m_lines.isEmpty()) // Если строка пустая — смысла озвучивать нет.
     {
-        qDebug() << "Пустая строка на озвучке";
+        LOG_INFO(QString("Пустая строка на озвучке"));
         return;
     }
 
     // Начинаем с первой строки.
     m_index = 0;
     speakNextLine(); // Запускаем процесс озвучки.
+    LOG_FUNC_END(QString("Старт озвучки!"));
 }
 
 // ======================
@@ -104,6 +108,7 @@ void Speaker::stopSpeak()
 // ======================
 void Speaker::speakWithFallback(QWidget* widget, const QString &text)
 {
+    LOG_FUNC_START();
     stopSpeak(); // Сначала сбрасываем старую озвучку.
 
     speakTextNVDA(text); // Пытаемся озвучить текст.
@@ -119,6 +124,7 @@ void Speaker::speakWithFallback(QWidget* widget, const QString &text)
                 // Если виджет уже уничтожен или скрыт — останавливаем таймер.
                 if(!widget || !widget->isVisible())
                 {
+                    LOG_INFO(QString("Виджет уже уничтожен или скрыт"));
                     checker->stop();
                     checker->deleteLater(); // Освобождаем таймер.
                     return;
@@ -127,12 +133,14 @@ void Speaker::speakWithFallback(QWidget* widget, const QString &text)
                 // Если NVDA перестала читать → тоже останавливаем таймер.
                 if(!isSpeakNVDA)
                 {
+                    LOG_WARN(QString("NVDA перестала читать!"));
                     checker->stop();
                     checker->deleteLater();
                 }
             });
 
     checker->start(); // Запускаем проверку.
+    LOG_FUNC_END(QString("Проверка fallback запущена!"));
 }
 
 // ======================
@@ -141,12 +149,13 @@ void Speaker::speakWithFallback(QWidget* widget, const QString &text)
 // ======================
 void Speaker::speakNextLine()
 {
+    LOG_FUNC_START();
     // Если индекс вышел за пределы строк → всё закончено.
     if (m_index >= m_lines.size())
     {
         m_timer.stop();     // Останавливаем таймер.
         isSpeakNVDA = false; // Ставим флаг "не читаем".
-        qDebug() << "Все озвучено!";
+        LOG_INFO(QString("Все озвучено!"));
         return;
     }
 
@@ -157,6 +166,7 @@ void Speaker::speakNextLine()
     {
         ++m_index;        // Увеличиваем индекс.
         m_timer.start(2000); // Ждём 2 секунды перед началом.
+        LOG_INFO(QString("Первый вызов. Таймер задержки запущен!"));
         return;
     }
 
@@ -167,10 +177,10 @@ void Speaker::speakNextLine()
     // Вызываем функцию NVDA для озвучки строки.
     int res = m_speakTextFunc(wline.c_str());
 
-    if(res == 0)
-        qDebug() << "NVDA прочел строку " << currentLine;
-    else
-        qWarning() << "NVDA не прочел строку " << currentLine;
+    if(res != 0)
+    {
+        LOG_WARN(QString("NVDA не прочел строку " + currentLine));
+    }
 
     ++m_index; // Переходим к следующей строке.
 
@@ -179,6 +189,7 @@ void Speaker::speakNextLine()
     if(delayTime < 300) delayTime = 300; // Минимум 300 мс.
 
     m_timer.start(delayTime); // Запускаем таймер.
+    LOG_FUNC_END(QString("Запущена задержка " + QString::number(delayTime) + " перед следующей строкой!"));
 }
 
 // ======================

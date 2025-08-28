@@ -1,21 +1,17 @@
-#include <Windows.h>
 #include <QApplication>
-#include <QCommandLineParser>
-#include <QCommandLineOption>
-#include <QListWidget>
+#include <QThread>
 
 #include "topwindow.h"
 
 int main(int argc, char *argv[])
 {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
-
+    // Создаём объект приложения Qt
     QApplication a(argc, argv);
 
+    // Создаём главное окно приложения
     TopWindow tw;
-    tw.show();
+    tw.show();  // показываем окно
 
+    // Запускаем цикл обработки событий Qt
     return a.exec();
 }
-
