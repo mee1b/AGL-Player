@@ -204,8 +204,8 @@ void Manager::s_Update()
 // s_LastSaveContin — заглушка для кнопки "Продолжить с последнего сохранения".
 void Manager::s_LastSaveContin()
 {
-    QMessageBox::information(this, tr("Error!"), tr("Не реализовано!"));
-    LOG_WARN(QString("Не реализовано!"));
+    emit loadGame(ui->plugList->currentItem()->text());
+    this->hide();
 }
 
 // closeEvent — переопределён, чтобы прокинуть сигнал closeManagerWindow при закрытии.

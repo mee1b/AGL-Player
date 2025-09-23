@@ -1,6 +1,11 @@
 #include "basketball.h"
 #include "namespaces.h"
 #include <map>
+#include <QSaveFile>
+#include <QDir>
+#include <QCoreApplication>
+#include <QJsonDocument>
+#include <optional>
 
 
 Basketball::Basketball(QObject *parent)
@@ -8,6 +13,215 @@ Basketball::Basketball(QObject *parent)
 {
     static std::mt19937::result_type seed = static_cast<unsigned int>(time(NULL));
     gen.seed(seed);
+}
+
+bool Basketball::saveState(const QString& displayName, const QString& content)
+{
+
+    // -------------------------------
+    // Формируем путь для сохранения
+    // -------------------------------
+    QString baseDir = QCoreApplication::applicationDirPath();
+    QString saveDir = baseDir + "/save/" + displayName + "/"; // Папка для сохранений конкретного плагина
+    QString path = saveDir + "save.json";            // Полный путь до файла сохранения
+
+    qDebug() << QDir::currentPath();
+    qDebug() << path;
+
+    // -------------------------------
+    // Проверяем, существует ли папка, если нет — создаём
+    // -------------------------------
+    QDir dir;                    // Класс для работы с директориями
+    if(!dir.exists(saveDir))     // Проверка существования директории
+    {
+        qDebug() << "Failed to create directory:" << saveDir;
+        dir.mkpath(saveDir);    // Создание всех промежуточных директорий (mkpath делает это рекурсивно)
+    }
+
+    // -------------------------------
+    // Создаём объект QSaveFile для безопасной атомарной записи
+    // -------------------------------
+    if(QFile::exists(path))
+    {
+        QFile::remove(path);
+    }
+    QSaveFile file(path);             // QSaveFile создаёт временный файл в той же папке
+    if(!file.open(QIODevice::WriteOnly)) // Открываем файл только для записи
+    {
+        qDebug() << "Failed to open file for writing:" << path << file.errorString();
+        return false;                 // Если открыть файл не удалось — выходим с ошибкой
+    }
+
+    // -------------------------------
+    // Формируем JSON объект для сохранения данных
+    // -------------------------------
+    QJsonObject obj;
+    obj["step"] = static_cast<int>(currentStep);   // Сохраняем текущий шаг игры, кастим enum к int
+    obj["player-score"] = player.score;           // Сохраняем счет игрока
+    obj["opponent-score"] = opponent.score;       // Сохраняем счет противника
+    obj["player-spirit"] = player.teamSpirit;     // Сохраняем командный дух игрока
+    obj["opponent-spirit"] = opponent.teamSpiritOpponent; // Сохраняем командный дух противника
+    obj["player-defense"] = player.defense;     // Сохраняем защиту игрока
+    obj["opponent-defense"] = opponent.defense; // Сохраняем защиту противника
+    obj["player-name"] = player.name;             // Сохраняем название команды игрока
+    obj["opponent-name"] = opponent.name;         // Сохраняем название команды противника
+    obj["ui-content"] = content;                  // Текст на экране, на момент сохранения
+
+    // -------------------------------
+    // Превращаем JSON объект в QJsonDocument
+    // -------------------------------
+    QJsonDocument doc(obj);
+    QByteArray arr = doc.toJson();                // Преобразуем документ в последовательность байтов для записи в файл
+
+    // -------------------------------
+    // Пишем байты в файл и проверяем, что запись прошла полностью
+    // -------------------------------
+    qint64 written = file.write(arr);             // Записываем данные в временный файл
+    if(written != arr.size())                     // Если записано не всё
+    {
+        return false;                             // Возвращаем false, чтобы сигнализировать о проблеме
+    }
+
+    // -------------------------------
+    // Завершаем запись — временный файл заменяет основной
+    // -------------------------------
+    if(!file.commit())                            // Атомарная замена старого файла новым
+    {
+        return false;
+    }
+
+    return true;                                  // Состояние успешно сохранено
+}
+
+
+std::optional<QString> Basketball::loadState(const QString& displayName)
+{
+    // -------------------------------
+    // Формируем путь к файлу сохранения
+    // -------------------------------
+    QString saveDir = QDir::currentPath() + "/save/" + displayName + "/"; // Папка для сохранений конкретного плагина
+    QString path = saveDir + "save.json";            // Полный путь до файла
+
+    QFile file(path);                                // Создаём объект файла
+
+    // -------------------------------
+    // Открываем файл для чтения
+    // -------------------------------
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        return std::nullopt;                                 // Не удалось открыть файл — выходим
+    }
+
+    // -------------------------------
+    // Читаем весь файл в память
+    // -------------------------------
+    QByteArray arr = file.readAll();                 // Считываем все байты
+    file.close();                                    // Закрываем файл
+
+    // -------------------------------
+    // Преобразуем байты в QJsonDocument
+    // -------------------------------
+    QJsonParseError parseError;                       // Структура для хранения ошибки парсинга
+    QJsonDocument doc = QJsonDocument::fromJson(arr, &parseError);
+    if(parseError.error != QJsonParseError::NoError)  // Если произошла ошибка при парсинге
+    {
+        return std::nullopt;
+    }
+
+    // -------------------------------
+    // Получаем объект JSON
+    // -------------------------------
+    if(!doc.isObject())
+    {
+        return std::nullopt;
+    }
+    QJsonObject obj = doc.object();
+
+    // -------------------------------
+    // Читаем и проверяем данные
+    // -------------------------------
+    if(obj.contains("step") && obj["step"].isDouble())      // В Qt числа в JSON всегда double
+        currentStep = static_cast<Step>(obj["step"].toDouble());
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("player-score") && obj["player-score"].isDouble())
+        player.score = static_cast<int>(obj["player-score"].toDouble());
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("opponent-score") && obj["opponent-score"].isDouble())
+        opponent.score = static_cast<int>(obj["opponent-score"].toDouble());
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("player-spirit") && obj["player-spirit"].isDouble())
+    {
+        player.teamSpirit = static_cast<int>(obj["player-spirit"].toDouble());
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+
+    if(obj.contains("opponent-spirit") && obj["opponent-spirit"].isDouble())
+    {
+        opponent.teamSpiritOpponent = static_cast<int>(obj["opponent-spirit"].toDouble());
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("player-defense") && obj["player-defense"].isDouble())
+    {
+        player.defense = static_cast<int>(obj["player-defense"].toDouble());
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("opponent-defense") && obj["opponent-defense"].isDouble())
+    {
+        opponent.defense = static_cast<int>(obj["opponent-defense"].toDouble());
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("player-name") && obj["player-name"].isString())
+    {
+        player.name = obj["player-name"].toString();
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("opponent-name") && obj["opponent-name"].isString())
+    {
+        opponent.name = obj["opponent-name"].toString();
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(obj.contains("ui-content") && obj["ui-content"].isString())
+    {
+        return obj["ui-content"].toString(); // Успешная загрузка
+    }
+
+    return std::nullopt;
 }
 
 QString Basketball::startMessage() const

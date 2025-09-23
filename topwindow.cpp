@@ -8,6 +8,8 @@
 #include "ui_topwindow.h"
 #include "LoggerMacros.h"
 
+//РАЗОБРАТЬСЯ С СОХРАНЕНИЕМ ПЛАГИНОВ!
+
 // ============================================================================
 // TopWindow: основной класс приложения
 // ----------------------------------------------------------------------------
@@ -79,6 +81,8 @@ TopWindow::TopWindow(QWidget *parent)
     connect(mw.get(), &Manager::deletePlugin, this, &TopWindow::deletePlug);
     connect(mw.get(), &Manager::update, this, &TopWindow::updatePlug);
     connect(ui->startGameAgain, &QAction::triggered, this, &TopWindow::againGame);
+    connect(ui->saveGame, &QAction::triggered, this, &TopWindow::saveGame);
+    connect(mw.get(), &Manager::loadGame, this, &TopWindow::loadLastGame);
 }
 
 TopWindow::~TopWindow()
@@ -624,6 +628,7 @@ void TopWindow::managerOpen()
     ui->enterText->clear();
     gameInterface = nullptr;
     disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+    ui->headerText->setPlainText(reference);
 
     // При закрытии менеджера возвращаем справочный текст в headerText
     connect(mw.get(), &Manager::closeManagerWindow, this, [this](){
@@ -696,6 +701,69 @@ void TopWindow::runGame()
 
     // Иначе отображаем ответ игры
     announceSetText(ui->headerText, text);
+}
+
+void TopWindow::saveGame()
+{
+    LOG_FUNC_START();
+    bool check = gameInterface->saveState(currentItem->text(), ui->headerText->toPlainText());
+
+    if(!check)
+    {
+        LOG_ERR(QString("Не удалось сохранить " + currentItem->text()));
+        return;
+    }
+
+    LOG_FUNC_END(QString("Плагин " + currentItem->text() + " успешно сохранен!"));
+}
+
+void TopWindow::loadLastGame(const QString& name)
+{
+    LOG_FUNC_START();
+    // Ищем соответствие имени в нашем списке загруженных плагинов
+    // (mw->namePlugin должен быть в том же порядке, что и pluginsLoad/pluginsInterface/filePaths).
+    for(int i = 0; i < mw->namePlugin.size(); ++i)
+    {
+        if(mw->namePlugin[i] == name)
+        {
+            // Берём интерфейс для плагина — это указатель, полученный при loadPlugin().
+            gameInterface = pluginsInterface[i];
+            currentItem = mw->getPlugList()->item(i);
+            if(!currentItem)
+            {
+                LOG_ERR(QString("currentItem = nullptr"));
+                QMessageBox::warning(this, tr("Error"), tr("Ошибка загрузки игры!"));
+                return;
+            }
+
+            if(gameInterface)
+            {
+                auto content = gameInterface->loadState(name);
+                if(!content)
+                {
+                    LOG_ERR(QString("Ошибка загрузки сохранения!" + name));
+                    QMessageBox::warning(this, tr("Error!"), tr("Ошибка загрузки сохранения!"));
+                    return;
+                }
+
+                announceSetText(ui->headerText, content.value());
+
+                disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+                connect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+
+                LOG_INFO(QString("Ввод переподключен к runGame"));
+                LOG_FUNC_END(QString("Плагин " + name + " успешно загружен!"));
+                return;
+            }
+            else
+            {
+                // Если по какой-то причине плагин не реализует GameInterface — предупреждаем пользователя.
+                QMessageBox::warning(this, "Ошибка", "Плагин не реализует GameInterface");
+                LOG_ERR(QString("Плагин " + name + " не реализует GameInterface"));
+                return;
+            }
+        }
+    }
 }
 
 // ============================================================================

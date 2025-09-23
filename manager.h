@@ -35,6 +35,7 @@ signals:
     void closeManagerWindow(); // Сигнал о закрытии окна менеджера
     void deletePlugin(QListWidgetItem* item); // Сигнал запроса на удаление выбранного плагина
     void update(); // Сигнал для обновления списка плагинов (например, после добавления новых)
+    void loadGame(const QString& name);
 
 private slots:
     void s_StartGame();       // Слот: запуск выбранной игры

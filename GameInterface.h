@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QtPlugin>
+#include <optional>
 
 //API для игр плагинов
 class GameInterface
@@ -14,6 +15,8 @@ public :
     virtual QString gameInput(const QString& playerChoice) = 0;
     //проверить, закончена игра или нет
     virtual bool isOver()const = 0;
+    [[nodiscard]] virtual bool saveState(const QString& displayName, const QString& content) = 0;
+    [[nodiscard]] virtual std::optional<QString> loadState(const QString& displayName) = 0;
 };
 
 #define GameInterface_iid "ru.AGL-Manager.GameInterface"

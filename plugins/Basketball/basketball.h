@@ -18,11 +18,13 @@ class Basketball : public QObject, public GameInterface
 public:
     explicit Basketball(QObject *parent = nullptr);
     //привественное сообщение при включении игры
-    virtual QString startMessage() const override;
+    QString startMessage() const override;
     //обработать команду пользователя и выдать новый текст
-    virtual QString gameInput(const QString& playerChoice) override;
+    QString gameInput(const QString& playerChoice) override;
     //проверить, закончена игра или нет
-    virtual bool isOver()const override;
+    bool isOver()const override;
+    [[nodiscard]] bool saveState(const QString& displayName, const QString& content) override;
+    [[nodiscard]] std::optional<QString> loadState(const QString& displayName) override;
 
 private:
     bool gameOver = false;
@@ -31,7 +33,7 @@ private:
     Opponent opponent;
     Player player;
     QString outputMessage;
-    QString end = ">Игра завершена.";
+    QString end = "Игра завершена.";
 
     std::map<defense, QString> defenseName =
         {

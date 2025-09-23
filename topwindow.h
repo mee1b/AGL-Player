@@ -55,6 +55,8 @@ private slots:
     void managerOpen(); // Открытие окна менеджера плагинов
     void exit(); // Выход из приложения
     void runGame(); // Запуск игры (слот для запуска плагина)
+    void saveGame();
+    void loadLastGame(const QString& name);
 
 private:
     Ui::TopWindow* ui; // Указатель на UI, созданный через Qt Designer
