@@ -57,6 +57,7 @@ private slots:
     void runGame(); // Запуск игры (слот для запуска плагина)
     void saveGame();
     void loadLastGame(const QString& name);
+    void fastLoad();
 
 private:
     Ui::TopWindow* ui; // Указатель на UI, созданный через Qt Designer

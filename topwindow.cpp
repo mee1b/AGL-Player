@@ -8,8 +8,6 @@
 #include "ui_topwindow.h"
 #include "LoggerMacros.h"
 
-//РАЗОБРАТЬСЯ С СОХРАНЕНИЕМ ПЛАГИНОВ!
-
 // ============================================================================
 // TopWindow: основной класс приложения
 // ----------------------------------------------------------------------------
@@ -83,6 +81,7 @@ TopWindow::TopWindow(QWidget *parent)
     connect(ui->startGameAgain, &QAction::triggered, this, &TopWindow::againGame);
     connect(ui->saveGame, &QAction::triggered, this, &TopWindow::saveGame);
     connect(mw.get(), &Manager::loadGame, this, &TopWindow::loadLastGame);
+    connect(ui->openSaveDontReload, &QAction::triggered, this, &TopWindow::fastLoad);
 }
 
 TopWindow::~TopWindow()
@@ -570,19 +569,19 @@ void TopWindow::announceSetText(QWidget *widget, const QString &text)
         // ---------- 2) Делаем виджет активным ----------
         plain->setFocus();
 
-        //---------- 3) Озвучивание текста ----------
-        // if (talk_.currentReader() == "")
-        // {
-        //     // Если текущий скринридер не определён, используем запасной NVDA
-        //     talkNVDA_.speakWithFallback(ui->headerText, text);
-        //     LOG_FUNC_END(QString("Используем NVDA!"));
-        // }
-        // else
-        // {
-        //     // Иначе выводим текст через JAWS/Narrator
-        //     talk_.output(text, true);
-        //     LOG_FUNC_END(QString("Используем talk.dll!"));
-        // }
+        // ---------- 3) Озвучивание текста ----------
+        if (talk_.currentReader() == "")
+        {
+            // Если текущий скринридер не определён, используем запасной NVDA
+            talkNVDA_.speakWithFallback(ui->headerText, text);
+            LOG_FUNC_END(QString("Используем NVDA!"));
+        }
+        else
+        {
+            // Иначе выводим текст через JAWS/Narrator
+            talk_.output(text, true);
+            LOG_FUNC_END(QString("Используем talk.dll!"));
+        }
     }
 }
 
@@ -764,6 +763,11 @@ void TopWindow::loadLastGame(const QString& name)
             }
         }
     }
+}
+
+void TopWindow::fastLoad()
+{
+    mw->loadGame(currentItem->text());
 }
 
 // ============================================================================

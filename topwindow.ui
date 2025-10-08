@@ -71,13 +71,10 @@
      <string>Файл</string>
     </property>
     <addaction name="gameManager"/>
-    <addaction name="addGame"/>
-    <addaction name="openSave"/>
     <addaction name="openSaveDontReload"/>
     <addaction name="saveGame"/>
     <addaction name="startGameAgain"/>
     <addaction name="separator"/>
-    <addaction name="resetAllSettings"/>
     <addaction name="quit"/>
    </widget>
    <widget class="QMenu" name="searchMenu">
@@ -87,15 +84,6 @@
     <property name="title">
      <string>Просмотр</string>
     </property>
-    <addaction name="setting"/>
-    <addaction name="search"/>
-    <addaction name="searchFurther"/>
-    <addaction name="sceneText"/>
-    <addaction name="objectList"/>
-    <addaction name="inventList"/>
-    <addaction name="wayList"/>
-    <addaction name="debugMode"/>
-    <addaction name="logOn"/>
    </widget>
    <widget class="QMenu" name="soundMenu">
     <property name="focusPolicy">
@@ -104,15 +92,6 @@
     <property name="title">
      <string>Звук</string>
     </property>
-    <addaction name="musicUp"/>
-    <addaction name="musicLow"/>
-    <addaction name="switchMusic"/>
-    <addaction name="soundUp"/>
-    <addaction name="soundLow"/>
-    <addaction name="switchSound"/>
-    <addaction name="alertUp"/>
-    <addaction name="alertLow"/>
-    <addaction name="switchAlert"/>
    </widget>
    <widget class="QMenu" name="helpMenu">
     <property name="focusPolicy">
@@ -121,7 +100,6 @@
     <property name="title">
      <string>Справка</string>
     </property>
-    <addaction name="findOutput"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="searchMenu"/>

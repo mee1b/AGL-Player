@@ -33,16 +33,16 @@ TalkWrap::~TalkWrap() {}
 // ======================
 static QString initTalkDll()
 {
-    LOG_FUNC_START();
+    // LOG_FUNC_START();
     Tolk_Load(); // Загружаем DLL (инициализация)
 
-    // Выводим информацию о статусе DLL и поддержке речи
-    LOG_INFO(QString("[Tolk] DLL loaded: "
-             + Tolk_IsLoaded()            // Загружена ли DLL?
-             + '\n'
-             + QString(Tolk_DetectScreenReader())  // Определяет, какой скринридер активен
-             + '\n'
-             + QString::number(Tolk_HasSpeech())));          // Поддерживает ли озвучку
+    // // Выводим информацию о статусе DLL и поддержке речи
+    // LOG_INFO(QString("[Tolk] DLL loaded: "
+    //          + Tolk_IsLoaded()            // Загружена ли DLL?
+    //          + '\n'
+    //          + QString(Tolk_DetectScreenReader())  // Определяет, какой скринридер активен
+    //          + '\n'
+    //          + QString::number(Tolk_HasSpeech())));          // Поддерживает ли озвучку
 
     Tolk_PreferSAPI(false); // Настройка использования SAPI (False = не использовать SAPI, только нативные драйверы)
 
@@ -51,11 +51,11 @@ static QString initTalkDll()
     if (win_name) // Если найден активный драйвер
     {
         QString name = QString::fromStdWString(win_name); // Конвертируем wide-string в QString
-        LOG_INFO(QString("Talk: the active screen reader driver is: " + name));
+        // LOG_INFO(QString("Talk: the active screen reader driver is: " + name));
 
         if (!Tolk_HasSpeech()) // Проверяем, поддерживает ли драйвер озвучку
         {
-            LOG_ERR(QString("Talk: error! Driver not support speech output!"));
+            // LOG_ERR(QString("Talk: error! Driver not support speech output!"));
             return QString(); // Возвращаем пустую строку — речи нет
         }
         LOG_FUNC_END(QString("Скрин ридер определен!"));
@@ -63,7 +63,7 @@ static QString initTalkDll()
     }
 
     // Если ни один поддерживаемый screen reader не запущен
-    LOG_WARN(QString("Talk: none of the supported screen readers is running"));
+    // LOG_WARN(QString("Talk: none of the supported screen readers is running"));
     return QString(); // Возвращаем пустую строку
 }
 
