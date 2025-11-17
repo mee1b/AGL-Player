@@ -80,10 +80,13 @@ cmake --build . --config Release
 ```cpp
 class GameInterface {
 public:
-    virtual ~GameInterface() = default;
+     virtual ~GameInterface() = default;
     virtual QString startMessage() const = 0;
     virtual QString gameInput(const QString& playerChoice) = 0;
-    virtual bool isOver() const = 0;
+    virtual bool isOver()const = 0;
+    //Добавлены методы сохранения/загрузки
+    [[nodiscard]] virtual bool saveState(const QString& displayName, const QString& content) = 0;
+    [[nodiscard]] virtual std::optional<QString> loadState(const QString& displayName) = 0;
 };
 ```
 
