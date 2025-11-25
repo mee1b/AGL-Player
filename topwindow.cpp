@@ -35,7 +35,8 @@ TopWindow::TopWindow(QWidget *parent)
     reference = loadReferenceFromJson();
 
     // Создаём окно-менеджер плагинов. std::unique_ptr используется для автоматического управления.
-    mw = std::make_unique<Manager>();
+    mw = std::make_unique<Manager>(this);
+    sm = std::make_unique<StateManager>(this);
 
     // Настройка внешнего вида основного окна
     setWindowTitle("AGL-Player");
@@ -82,6 +83,8 @@ TopWindow::TopWindow(QWidget *parent)
     connect(ui->saveGame, &QAction::triggered, this, &TopWindow::saveGame);
     connect(mw.get(), &Manager::loadGame, this, &TopWindow::loadLastGame);
     connect(ui->openSaveDontReload, &QAction::triggered, this, &TopWindow::fastLoad);
+    connect(ui->undo, &QAction::triggered, this, &TopWindow::undo);
+    connect(ui->redo, &QAction::triggered, this, &TopWindow::redo);
 }
 
 TopWindow::~TopWindow()
@@ -311,6 +314,8 @@ void TopWindow::deletePlug(QListWidgetItem* item)
 
 void TopWindow::updatePlug()
 {
+
+    //TODO реализовать корректное удаление плагинов из системы, либо сделать буфер для сверки обновлений
     LOG_FUNC_START();
     // ---------- 0) Сохраняем текущий размер списка плагинов ----------
     // Нужен для того, чтобы после загрузки новых плагинов посчитать, сколько добавилось
@@ -484,6 +489,12 @@ void TopWindow::createActionsName()
     ui->startGameAgain->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
     ui->startGameAgain->setStatusTip(tr("Начать игру заново"));
 
+    ui->undo->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+    ui->undo->setStatusTip(tr("Отменить последнее действие"));
+
+    ui->redo->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_W));
+    ui->redo->setStatusTip(tr("Вернуть последнее действие"));
+
     ui->resetAllSettings->setStatusTip(tr("Сбросить все настройки"));
     ui->resetAllSettings->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_Z);
 
@@ -626,6 +637,7 @@ void TopWindow::managerOpen()
     talkNVDA_.stopSpeak();
     ui->enterText->clear();
     gameInterface = nullptr;
+    currentItem = nullptr;
     disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
     ui->headerText->setPlainText(reference);
 
@@ -678,7 +690,14 @@ void TopWindow::runGame()
         LOG_ERR(QString("Интерфейс невалиден!"));
         return;
     }
-
+    if(ui->headerText->toPlainText() != "")
+    {
+        auto check = sm->snapshot(gameInterface, currentItem, ui->headerText);
+        if(!check)
+        {
+            LOG_ERR(QString("StateManager->snapshot недоступен"));
+        }
+    }
     // Печатаем введённый текст (в header или в enterText — announceSetText использует QPlainTextEdit)
     announceSetText(ui->enterText, ui->enterText->text());
 
@@ -705,7 +724,7 @@ void TopWindow::runGame()
 void TopWindow::saveGame()
 {
     LOG_FUNC_START();
-    bool check = gameInterface->saveState(currentItem->text(), ui->headerText->toPlainText());
+    bool check = sm->save(gameInterface, currentItem, ui->headerText);
 
     if(!check)
     {
@@ -737,7 +756,7 @@ void TopWindow::loadLastGame(const QString& name)
 
             if(gameInterface)
             {
-                auto content = gameInterface->loadState(name);
+                auto content = sm->load(gameInterface, currentItem);
                 if(!content)
                 {
                     LOG_ERR(QString("Ошибка загрузки сохранения!" + name));
@@ -767,7 +786,54 @@ void TopWindow::loadLastGame(const QString& name)
 
 void TopWindow::fastLoad()
 {
+    if(!currentItem) return;
     mw->loadGame(currentItem->text());
+}
+
+void TopWindow::undo()
+{
+    LOG_FUNC_START();
+    auto undoResult = sm->undo(gameInterface, currentItem, ui->headerText);
+    if(!undoResult)
+    {
+        QMessageBox::warning(this, "Предупреждение", "Ошибка возврата предыдущего действия!");
+        LOG_ERR(QString("Ошибка отмены предыдущего действия на уровне StateManager"));
+        return;
+    }
+
+    auto result = gameInterface->loadState(undoResult.value());
+    if(!result)
+    {
+        QMessageBox::warning(this, "Предупреждение", "Ошибка возврата предыдущего действия!");
+        LOG_ERR(QString("Ошибка отмены предыдущего действия на уровне plugin " + currentItem->text()));
+        return;
+    }
+
+    announceSetText(ui->headerText, result.value());
+    LOG_FUNC_END(QString("undo успешно!"));
+}
+
+void TopWindow::redo()
+{
+    LOG_FUNC_START();
+    auto redoResult = sm->redo(gameInterface, currentItem, ui->headerText);
+    if(!redoResult)
+    {
+        QMessageBox::warning(this, "Предупреждение", "Ошибка возврата предыдущего действия!");
+        LOG_ERR(QString("Ошибка возврата предыдущего действия на уровне StateManager"));
+        return;
+    }
+
+    auto result = gameInterface->loadState(redoResult.value());
+    if(!result)
+    {
+        QMessageBox::warning(this, "Предупреждение", "Ошибка возврата предыдущего действия!");
+        LOG_ERR(QString("Ошибка отмены предыдущего действия на уровне plugin " + currentItem->text()));
+        return;
+    }
+
+    announceSetText(ui->headerText, result.value());
+    LOG_FUNC_END(QString("redo успешно"));
 }
 
 // ============================================================================

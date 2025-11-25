@@ -13,8 +13,8 @@ public:
     QString gameInput(const QString& playerChoice) override;
     QString startMessage() const override;
     bool isOver() const override;
-    [[nodiscard]] virtual bool saveState(const QString& displayName, const QString& content) override;
-    [[nodiscard]] virtual std::optional<QString> loadState(const QString& displayName) override;
+    [[nodiscard]] virtual QByteArray saveState(const QString& content) override;
+    [[nodiscard]] virtual std::optional<QString> loadState(const QByteArray& gameData) override;
 
 private:
     QString add = "Вы написали: ";

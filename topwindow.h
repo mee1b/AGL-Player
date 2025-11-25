@@ -19,6 +19,7 @@
 #include "GameInterface.h"
 #include "NVDAController.h"
 #include "talkwrap.h"
+#include "statemanager.h"
 
 
 class TalkWrap;
@@ -58,6 +59,8 @@ private slots:
     void saveGame();
     void loadLastGame(const QString& name);
     void fastLoad();
+    void undo();
+    void redo();
 
 private:
     Ui::TopWindow* ui; // Указатель на UI, созданный через Qt Designer
@@ -70,5 +73,6 @@ private:
     TalkWrap talk_; // Обёртка для системы озвучки
     Speaker talkNVDA_; // Объект для работы с NVDA (озвучка)
     QListWidgetItem* currentItem = nullptr; // Текущий выбранный элемент в списке плагинов
+    std::unique_ptr<StateManager> sm;
 };
 

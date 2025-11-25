@@ -23,8 +23,8 @@ public:
     QString gameInput(const QString& playerChoice) override;
     //проверить, закончена игра или нет
     bool isOver()const override;
-    [[nodiscard]] bool saveState(const QString& displayName, const QString& content) override;
-    [[nodiscard]] std::optional<QString> loadState(const QString& displayName) override;
+    [[nodiscard]] QByteArray saveState(const QString& content) override;
+    [[nodiscard]] std::optional<QString> loadState(const QByteArray& gameData) override;
 
 private:
     bool gameOver = false;

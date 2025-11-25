@@ -74,6 +74,8 @@
     <addaction name="openSaveDontReload"/>
     <addaction name="saveGame"/>
     <addaction name="startGameAgain"/>
+    <addaction name="undo"/>
+    <addaction name="redo"/>
     <addaction name="separator"/>
     <addaction name="quit"/>
    </widget>
@@ -252,6 +254,16 @@
   <action name="findOutput">
    <property name="text">
     <string>Текущий способ вывода</string>
+   </property>
+  </action>
+  <action name="undo">
+   <property name="text">
+    <string>Отменить последнее действие</string>
+   </property>
+  </action>
+  <action name="redo">
+   <property name="text">
+    <string>Вернуть последнее действие</string>
    </property>
   </action>
  </widget>

@@ -62,8 +62,8 @@ void Utilities::clearItems(QListWidget* wid, QListWidget* wid2, QVector<QString>
         if(name == wid->item(size)->text())
         {
             LOG_INFO(QString(name + " удален!")); // Логируем удаление
-            delete wid->item(size);   // Удаляем из первого виджета
-            delete wid2->item(size);  // Удаляем из второго виджета
+            delete wid->takeItem(size);   // Удаляем из первого виджета
+            delete wid2->takeItem(size);  // Удаляем из второго виджета
             --size;                   // Переходим к предыдущему элементу
         }
     }
