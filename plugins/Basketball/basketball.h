@@ -25,9 +25,11 @@ public:
     bool isOver()const override;
     [[nodiscard]] QByteArray saveState(const QString& content) override;
     [[nodiscard]] std::optional<QString> loadState(const QByteArray& gameData) override;
+    int getUndoAttempts() const noexcept override;
 
 private:
     bool gameOver = false;
+    const int undoAttempts = 3;
     bool blocked = false;
     bool stealed = false;
     Opponent opponent;

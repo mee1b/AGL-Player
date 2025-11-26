@@ -3,6 +3,8 @@
 #include <QDir>
 #include <QPlainTextEdit>
 #include <QListWidgetItem>
+#include <QDataStream>
+#include <QCryptographicHash>
 
 #include "GameInterface.h"
 #include "statemanager.h"
@@ -26,7 +28,7 @@ bool StateManager::snapshot(GameInterface* iface, QListWidgetItem* item, QPlainT
         return false;
     }
 
-    undoStack.push(buffSave);
+    undoList.emplace_back(buffSave);
 
     // -------------------------------
     // Так как появляется новое undo состояние, чистим старый redo stack
@@ -36,18 +38,24 @@ bool StateManager::snapshot(GameInterface* iface, QListWidgetItem* item, QPlainT
         redoStack.pop();
     }
 
-    LOG_FUNC_END(QString("undoStack успешно обновлен!"));
+    LOG_FUNC_END(QString("undoList успешно обновлен!"));
     return true;
 }
 
 std::optional<QByteArray> StateManager::undo(GameInterface *iface, QListWidgetItem *item, QPlainTextEdit* header)
 {
     LOG_FUNC_START();
-    if(undoStack.empty())
+    if(undoList.empty())
     {
-        LOG_WARN(QString("undo stack пуст"));
+        LOG_WARN(QString("undo list пуст"));
         return std::nullopt;
     }
+
+    while(undoList.size() > iface->getUndoAttempts())
+    {
+        undoList.pop_front();
+    }
+
 
     //получаем текущее состояние игры для сохранения в redo stack
     if(!iface)
@@ -69,8 +77,8 @@ std::optional<QByteArray> StateManager::undo(GameInterface *iface, QListWidgetIt
     //сохраняем тукущее состояние в redo stack
     redoStack.push(currentState);
 
-    auto buffState = undoStack.top();
-    undoStack.pop();
+    auto buffState = undoList.back();
+    undoList.pop_back();
 
 
     if(buffState.isEmpty())
@@ -103,7 +111,7 @@ std::optional<QByteArray> StateManager::redo(GameInterface *iface, QListWidgetIt
         LOG_ERR(QString("Текущее состояние игры " + item->text() + " пустое"));
         return std::nullopt;
     }
-    undoStack.push(currentState);
+    undoList.emplace_back(currentState);
 
     auto bufState = redoStack.top();
     redoStack.pop();
@@ -119,7 +127,7 @@ std::optional<QByteArray> StateManager::redo(GameInterface *iface, QListWidgetIt
     return bufState;
 }
 
-bool StateManager::save(GameInterface* iface, QListWidgetItem* item, QPlainTextEdit* header) const
+bool StateManager::save(GameInterface* iface, QListWidgetItem* item, QPlainTextEdit* header, quint32 version) const
 {
     LOG_FUNC_START();
     // -------------------------------
@@ -147,6 +155,16 @@ bool StateManager::save(GameInterface* iface, QListWidgetItem* item, QPlainTextE
         QFile::remove(path);
     }
 
+    auto gameData = iface->saveState(header->toPlainText());  // Берем состояние текущее состояние игры
+
+    //Вычисляем хэш от данных
+    QByteArray hash = QCryptographicHash::hash(gameData, QCryptographicHash::Sha256);
+    if(hash.size() != 32)
+    {
+        LOG_ERR(QString("Ошибка создания хэша для игры " + item->text() ));
+        return false;
+    }
+
     QSaveFile file(path);                // QSaveFile создаёт временный файл в той же папке
     if(!file.open(QIODevice::WriteOnly)) // Открываем файл только для записи
     {
@@ -157,14 +175,27 @@ bool StateManager::save(GameInterface* iface, QListWidgetItem* item, QPlainTextE
     // -------------------------------
     // Пишем байты в файл и проверяем, что запись прошла полностью
     // -------------------------------
-    auto gameData = iface->saveState(header->toPlainText());           // Берем состояние текущее состояние игры
 
-    qint64 wrt = file.write(gameData);
-    if(wrt != gameData.size())
-    {
-        LOG_ERR(QString("Файл " + path + " потерял данные при сохранении!"));
-        return false;                             // Если записано меньше, чем должно было логируем и выходим с ошибкой
-    }
+    //Создаем QDataStream для бинарной записи
+    QDataStream out(&file);
+
+    //Устанавливаем версию для совместимости
+    out.setVersion(QDataStream::Qt_6_8);
+
+    //Делам префикс данных
+    out.writeRawData("AGLS", 4);
+
+    //пишем версию метода сохранения(нужна для будующей совместимости) в поток
+    out << version;
+
+    //записываем хэш файла длина 32 байта - фиксирована
+    out.writeRawData(hash.constData(), static_cast<quint32>(hash.size()));
+
+    //записываем размер gameData
+    out << static_cast<quint32>(gameData.size());
+
+    //записываем gameData в поток
+    out.writeRawData(gameData.constData(), static_cast<quint32>(gameData.size()));
 
     // -------------------------------
     // Завершаем запись — временный файл заменяет основной
@@ -191,7 +222,7 @@ std::optional<QString> StateManager::load(GameInterface *iface, QListWidgetItem 
     QString path = loadDir + "gameSave.save";
 
     // -------------------------------
-    // Проверяем, существует ли папка, если нет — выходим с ошибкой
+    // Проверяем, существует ли файл, если нет — выходим с ошибкой
     // -------------------------------
     QFile file(path);
     if(!QFile::exists(path))
@@ -209,13 +240,53 @@ std::optional<QString> StateManager::load(GameInterface *iface, QListWidgetItem 
         return std::nullopt;
     }
 
-    // -------------------------------
-    // Читаем из файла данные для загрузки
-    // -------------------------------
-    QByteArray gameData = file.readAll();
-    if(gameData.isEmpty())
+    //создаем поток на чтение
+    QDataStream in(&file);
+    in.setVersion(QDataStream::Qt_6_8);
+
+    //Читаем префикс
+    char prefix[4];
+    if(in.readRawData(prefix, 4) != 4)
     {
-        LOG_WARN(QString("Файл по пути " + path + " не имеет данных"));
+        LOG_ERR(QString("Нарушение целостности префикса игры " + item->text()));
+        return std::nullopt;
+    }
+    if(std::memcmp(prefix, "AGLS", 4) != 0) //сравниваем буферы префикса, чтобы убедится что это наш файл
+    {
+        LOG_ERR(QString("Неверный префикс игры " + item->text()));
+        return std::nullopt;
+    }
+
+    //Читаем версию. При изменении версии добавится switch/case для совместимости
+    quint32 version;
+    in >> version;
+
+    //Читаем хэш из файла
+    QByteArray fileHash(32, 0);
+    if(in.readRawData(fileHash.data(), 32) != 32)
+    {
+        LOG_ERR(QString("Ошибка целостности хэша игры " + item->text()));
+        return std::nullopt;
+    }
+
+    //Читаем размер данных
+    quint32 gameDataSize;
+    in >> gameDataSize;
+
+    // Читаем из файла данные для загрузки
+    QByteArray gameData;
+    gameData.resize(gameDataSize);
+    if(in.readRawData(gameData.data(), gameDataSize) != static_cast<int>(gameDataSize))
+    {
+        LOG_ERR(QString("Ошибка чтения. Данные не равны фактическому размер. Игра " + item->text()));
+        return std::nullopt;
+    }
+
+    //Сравниваем хэши из файла и фактических хэш данных
+    QByteArray currentHash = QCryptographicHash::hash(gameData, QCryptographicHash::Sha256);
+    if(currentHash != fileHash)
+    {
+        LOG_ERR(QString("Хэш поврежден. Игра " + item->text()));
         return std::nullopt;
     }
 

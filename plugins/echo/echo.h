@@ -15,8 +15,10 @@ public:
     bool isOver() const override;
     [[nodiscard]] virtual QByteArray saveState(const QString& content) override;
     [[nodiscard]] virtual std::optional<QString> loadState(const QByteArray& gameData) override;
+    int getUndoAttempts() const noexcept override;
 
 private:
+    const int undoAttempts = 3;
     QString add = "Вы написали: ";
     QString nothing = "Вы ничего не написали!";
     QString welcome = "Добро пожаловать в игру \"ЭХО\"\nДля завершения игры введите \"выход\"";

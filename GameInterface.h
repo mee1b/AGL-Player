@@ -13,10 +13,13 @@ public :
     virtual QString startMessage() const = 0;
     //обработать команду пользователя и выдать новый текст
     virtual QString gameInput(const QString& playerChoice) = 0;
-    //проверить, закончена игра или нет
-    virtual bool isOver()const = 0;
+    //работа с состояние игры
     [[nodiscard]] virtual QByteArray saveState(const QString& content) = 0;
     [[nodiscard]] virtual std::optional<QString> loadState(const QByteArray& gameData) = 0;
+    //Количество undo действий
+    virtual int getUndoAttempts() const noexcept = 0;
+    //проверить, закончена игра или нет
+    virtual bool isOver()const = 0;
 };
 
 #define GameInterface_iid "ru.AGL-Manager.GameInterface"

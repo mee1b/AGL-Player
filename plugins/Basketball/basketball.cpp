@@ -148,6 +148,11 @@ std::optional<QString> Basketball::loadState(const QByteArray& gameData)
     return std::nullopt;
 }
 
+int Basketball::getUndoAttempts() const noexcept
+{
+    return undoAttempts;
+}
+
 QString Basketball::startMessage() const
 {
     return menu::WELCOME;

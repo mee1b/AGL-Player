@@ -63,3 +63,8 @@ std::optional<QString> PluginEcho::loadState(const QByteArray& gameData)
 
     return std::nullopt;
 }
+
+int PluginEcho::getUndoAttempts() const noexcept
+{
+    return undoAttempts;
+}
