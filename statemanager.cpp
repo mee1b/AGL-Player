@@ -127,6 +127,17 @@ std::optional<QByteArray> StateManager::redo(GameInterface *iface, QListWidgetIt
     return bufState;
 }
 
+void StateManager::clearState()
+{
+    //Чистим состояния, чтобы не мешать данные между сеансами игр
+    undoList.clear();
+
+    while(!redoStack.empty())
+    {
+        redoStack.pop();
+    }
+}
+
 bool StateManager::save(GameInterface* iface, QListWidgetItem* item, QPlainTextEdit* header, quint32 version) const
 {
     LOG_FUNC_START();

@@ -21,6 +21,8 @@ public:
     [[nodiscard]] std::optional<QByteArray> undo(GameInterface *iface, QListWidgetItem *item, QPlainTextEdit* header);
     [[nodiscard]] std::optional<QByteArray> redo(GameInterface *iface, QListWidgetItem *item, QPlainTextEdit* header);
 
+    void clearState();
+
 
 private:
     std::list<QByteArray> undoList;

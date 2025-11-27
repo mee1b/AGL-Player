@@ -2,6 +2,7 @@
 #include <QLabel>
 #include <QThread>
 #include <algorithm> // используем std::find, std::distance
+#include <QDesktopServices>
 
 #include "utilities.h"
 #include "topwindow.h"
@@ -85,6 +86,8 @@ TopWindow::TopWindow(QWidget *parent)
     connect(ui->openSaveDontReload, &QAction::triggered, this, &TopWindow::fastLoad);
     connect(ui->undo, &QAction::triggered, this, &TopWindow::undo);
     connect(ui->redo, &QAction::triggered, this, &TopWindow::redo);
+    //открытие лог файла игры
+    connect(ui->gameLogFile, &QAction::triggered, this,&TopWindow::openGameLog);
 }
 
 TopWindow::~TopWindow()
@@ -119,7 +122,12 @@ void TopWindow::onPlugSelected(QListWidgetItem* item)
 
             if(gameInterface)
             {
+                //Чистим StateManager
+                sm->clearState();
+                //Начинаем логировать игру
+                START_GAME_LOG(plugName);
                 // Отображаем стартовое сообщение плагина в headerText
+                LOG_PC_ANSWER(gameInterface->startMessage(), plugName);
                 announceSetText(ui->headerText, gameInterface->startMessage());
 
                 // Переподключаем ввод: убираем старый слот (если был) и подключаем runGame.
@@ -359,6 +367,7 @@ void TopWindow::againGame()
     // Обнуляем указатель на текущий игровой интерфейс,
     // чтобы старый плагин больше не обрабатывал ввод
     gameInterface = nullptr;
+    sm->clearState();
 
     // ---------- 1) Отключаем обработку Enter в поле ввода ----------
     // Если пользователь нажимает Enter, слот runGame больше не будет вызываться для старой игры
@@ -368,6 +377,7 @@ void TopWindow::againGame()
     // Повторно выбираем текущий плагин из списка, чтобы инициализировать его заново
     // onPlugSelected установит gameInterface, подключит слот runGame и обновит headerText
     onPlugSelected(currentItem);
+    START_GAME_LOG(currentItem->text());
     LOG_FUNC_END(QString("Новая игра " + currentItem->text() + " начата!"));
 }
 
@@ -485,6 +495,8 @@ void TopWindow::createActionsName()
     ui->saveGame->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_S));
     ui->saveGame->setStatusTip(tr("Сохранить игру"));
 
+    ui->gameLogFile->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+    ui->gameLogFile->setStatusTip(tr("Открыть файл игрового лога"));
 
     ui->startGameAgain->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
     ui->startGameAgain->setStatusTip(tr("Начать игру заново"));
@@ -698,8 +710,11 @@ void TopWindow::runGame()
             LOG_ERR(QString("StateManager->snapshot недоступен"));
         }
     }
+    auto gameName = currentItem->text();
     // Печатаем введённый текст (в header или в enterText — announceSetText использует QPlainTextEdit)
-    announceSetText(ui->enterText, ui->enterText->text());
+    auto txt = ui->enterText->text();
+    announceSetText(ui->enterText, txt);
+    LOG_PLAYER_CHOICE(txt, gameName);
 
     // Получаем ответ от плагина; gameInput реализует логику игры
     QString text = gameInterface->gameInput(ui->enterText->text());
@@ -713,11 +728,14 @@ void TopWindow::runGame()
         gameInterface = nullptr;
         announceSetText(ui->headerText, reference);
         disconnect(ui->enterText, &QLineEdit::returnPressed, this, &TopWindow::runGame);
+        LOG_END_GAME(currentItem->text());
+        currentItem = nullptr;
         LOG_FUNC_END(QString("Игра успешно завершена!"));
         return;
     }
 
     // Иначе отображаем ответ игры
+    LOG_PC_ANSWER(text, gameName);
     announceSetText(ui->headerText, text);
 }
 
@@ -834,6 +852,26 @@ void TopWindow::redo()
 
     announceSetText(ui->headerText, result.value());
     LOG_FUNC_END(QString("redo успешно"));
+}
+
+void TopWindow::openGameLog()
+{
+    if(!gameInterface)
+    {
+        QMessageBox::warning(this, "Предупрждение", "Чтобы открыть лог файл, сначала откройте игру!");
+        LOG_WARN(QString("Игра не выбрана!"));
+        return;
+    }
+
+    auto path = Logger::instance().getPath(currentItem->text());
+    if(!path)
+    {
+        QMessageBox::warning(this, "Ошибка", QString("Лог файл игры %1 отсутствует!").arg(currentItem->text()));
+        LOG_ERR(QString("У игры %1 отсутвует лог").arg(currentItem->text()));
+        return;
+    }
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path.value()));
 }
 
 // ============================================================================

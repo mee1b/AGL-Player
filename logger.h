@@ -6,165 +6,211 @@
 #include <QTextStream>
 #include <QThread>
 #include <QDateTime>
-#include <QMessageBox>
-
+#include <QDir>
+#include <unordered_map>
+//TODO переписать адекватно для логирования игр
 // -----------------------------------------------------------------------------
 // Уровни логирования
 // -----------------------------------------------------------------------------
-enum class logLevel
+enum class LogLevel
 {
-    Info,     // Информационные сообщения
-    Warning,  // Предупреждения, которые могут потребовать внимания
-    Error     // Ошибки, которые могут нарушить работу программы
+    Info,
+    Warning,
+    Error
 };
 
 // -----------------------------------------------------------------------------
-// Logger — потокобезопасный синглтон для логирования в файл
+// Каналы логирования
+// -----------------------------------------------------------------------------
+enum class LogChannel
+{
+    System,
+    Gameplay
+};
+
+// -----------------------------------------------------------------------------
+// Logger — потокобезопасный синглтон с поддержкой
+// * logs/system_log/system.log
+// * logs/games_log/<GameName>/gameplay.log
 // -----------------------------------------------------------------------------
 class Logger : public QObject
 {
     Q_OBJECT
 
 public:
-    // -------------------------------------------------------------------------
-    // Получение единственного экземпляра (Singleton)
-    // -------------------------------------------------------------------------
-    static Logger& getInstance()
+    static Logger& instance()
     {
-        // Локальная статическая переменная создается один раз при первом вызове.
-        // Она гарантирует наличие только одного экземпляра Logger во всем приложении.
-        static Logger instance;
-        return instance;
+        static Logger inst;
+        return inst;
     }
 
-    // -------------------------------------------------------------------------
-    // Установка минимального уровня логирования
-    // Сообщения ниже этого уровня будут игнорироваться.
-    // -------------------------------------------------------------------------
-    void setMinLevel(logLevel lvl) { minLevel = lvl; }
-
-    // -------------------------------------------------------------------------
-    // Публичный метод для логирования
-    // Любой поток может вызвать logMessage(), безопасно благодаря сигналам/слотам
-    // -------------------------------------------------------------------------
-    void logMessage(logLevel lvl, const QString& msg)
+    void setMinLevel(LogLevel lvl)
     {
-        // Проверяем, доступен ли поток и открыт ли файл
-        bool enabled = logFile.isOpen() && logThread != nullptr;
-        if(!enabled) return; // Если Logger не готов — тихо игнорируем
+        minLevel = lvl;
+    }
 
-        // Отправляем сообщение в слот handleLog() через сигнал
-        // Qt::QueuedConnection гарантирует, что handleLog выполнится в потоке Logger
-        emit logSignal(lvl, msg);
+    // Обязательный вызов перед началом логирования игры
+    // Создает директорию игры и инициализирует стрим
+    bool initGameLog(const QString& gameName)
+    {
+        QMutexLocker lock(&mtx);
+
+        const QString gameDir = baseGamesDir + "/" + gameName;
+        QDir().mkpath(gameDir);
+
+        const QString logPath = gameDir + "/gameplay.log";
+
+        auto file = std::make_unique<QFile>(logPath);
+        if(!file->open(QIODevice::Append | QIODevice::Text))
+            return false;
+
+        auto stream = std::make_unique<QTextStream>(file.get());
+
+        GameInfo gInfo;
+        gInfo.gameFile = std::move(file);
+        gInfo.gameStream = std::move(stream);
+        gInfo.path = logPath;
+
+        gameLogMap.emplace(gameName, std::move(gInfo));
+        auto iter = gameLogMap.find(gameName);
+        if(iter == gameLogMap.end())
+            return false;
+        *iter->second.gameStream << "\n-------------------Новая игра-------------------\n\n";
+        iter->second.gameStream->flush();
+
+        return true;
+    }
+
+    std::optional<QString> getPath(const QString& gameName) const noexcept
+    {
+        auto iter = gameLogMap.find(gameName);
+        if(iter == gameLogMap.end())
+            return std::nullopt;
+
+        return iter->second.path;
+    }
+
+    // Публичный метод логирования
+    void log(const QString& msg, const QString& gameName)
+    {
+        if(!ready) return;
+        emit logSignal(LogChannel::Gameplay, {}, msg, gameName);
+    }
+
+    void logSystem(LogLevel lvl, const QString& msg)
+    {
+        if(!ready) return;
+        emit logSignal(LogChannel::System, lvl, msg, {});
     }
 
 signals:
-    // -------------------------------------------------------------------------
-    // Сигнал для передачи сообщения в слот handleLog()
-    // Используется для безопасного логирования из разных потоков
-    // -------------------------------------------------------------------------
-    void logSignal(logLevel lvl, const QString& msg);
+    void logSignal(LogChannel channel, LogLevel lvl, const QString& msg, const QString& gameName);
 
 private slots:
-    // -------------------------------------------------------------------------
-    // Слот для обработки сообщений
-    // Вызывается в потоке Logger при каждом лог-сообщении
-    // -------------------------------------------------------------------------
-    void handleLog(logLevel lvl, const QString& msg)
+    void handleLog(LogChannel channel, LogLevel lvl, const QString& msg, const QString& gameName)
     {
-        // Игнорируем сообщения ниже минимального уровня
-        if(lvl < minLevel) return;
+        if(lvl < minLevel)
+            return;
 
-        QString prefix;  // Префикс для уровня логирования
-
-        // Определяем префикс по уровню
-        switch(lvl)
+        QString prefix;
+        switch (lvl)
         {
-        case logLevel::Info: prefix = "[INFO]"; break;
-        case logLevel::Warning: prefix = "[WARNING]"; break;
-        case logLevel::Error: prefix = "[ERROR]"; break;
+        case LogLevel::Info: prefix = "[INFO]"; break;
+        case LogLevel::Warning: prefix = "[WARNING]"; break;
+        case LogLevel::Error: prefix = "[ERROR]"; break;
         }
 
-        // Потокобезопасная запись в файл:
-        // QMutexLocker блокирует мьютекс при создании и автоматически разблокирует
-        // при выходе из области видимости (RAII)
-        QMutexLocker<QMutex> lock(&mtx);
+        const QString time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 
-        // Формируем запись: дата/время + префикс + сообщение
-        out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-            << ' ' << prefix << ' ' << msg << '\n';
 
-        // flush() гарантирует немедленную запись на диск
-        out.flush();
+        QMutexLocker lock(&mtx);
+
+        if(channel == LogChannel::System)
+        {
+            const QString full = time + " " + prefix + " " + msg + "\n";
+            systemStream << full;
+            systemStream.flush();
+        }
+        else
+        {
+            const QString full = msg + '\n';
+            auto iter = gameLogMap.find(gameName);
+            if(iter == gameLogMap.end())
+                return;
+
+            *iter->second.gameStream << full;
+            iter->second.gameStream->flush();
+        }
     }
 
 private:
-    // -------------------------------------------------------------------------
-    // Приватный конструктор
-    // -------------------------------------------------------------------------
     Logger(QObject* parent = nullptr)
         : QObject(parent)
-        , out(&logFile) // QTextStream пишет в logFile
     {
-        // Указываем имя файла логирования
-        logFile.setFileName("log.txt");
+        // --- Создаём директории ---
+        QDir().mkpath("logs/system_log");
+        QDir().mkpath("logs/games_log");
 
-        // Пытаемся открыть файл для дозаписи
-        if(!logFile.open(QIODevice::Append | QIODevice::Text))
-        {
-            // Если файл не открылся — показываем предупреждение
-            // Программа продолжает работу без логирования
-            QMessageBox::warning(nullptr, "Logger error",
-                                 QString("Не удалось открыть лог-файл: Приложение продолжит работу без логирования."));
-            logThread = nullptr;
-            return; // Конструктор завершает и Logger остается в "неактивном" состоянии
-        }
+        baseSystemDir = "logs/system_log";
+        baseGamesDir = "logs/games_log";
 
-        // Создаем поток для логирования
-        logThread = new QThread();
+        // --- Подготавливаем system.log ---
+        const QString sysLogPath = baseSystemDir + "/system.log";
+        systemFile.setFileName(sysLogPath);
 
-        // Перемещаем объект Logger в отдельный поток
-        this->moveToThread(logThread);
+        if(!systemFile.open(QIODevice::Append | QIODevice::Text))
+            return;
 
-        // Соединяем сигнал с обработкой слотом в режиме очереди сообщений
-        connect(this, &Logger::logSignal, this, &Logger::handleLog, Qt::QueuedConnection);
+        systemStream.setDevice(&systemFile);
 
-        // Запускаем поток
-        logThread->start();
-        logMessage(logLevel::Info, "Новая сессия!");
+        // --- Стартуем поток ---
+        workerThread = new QThread();
+        this->moveToThread(workerThread);
+
+        connect(
+            this, &Logger::logSignal,
+            this, &Logger::handleLog,
+            Qt::QueuedConnection
+            );
+
+        workerThread->start();
+        ready = true;
+
+        logSystem(LogLevel::Info, "Logger initialized");
     }
 
-    // -------------------------------------------------------------------------
-    // Деструктор
-    // -------------------------------------------------------------------------
     ~Logger()
     {
-        // Завершаем поток корректно, если он был создан
-        if(logThread)
+        if(workerThread)
         {
-            logThread->quit();  // Просим поток завершиться
-            logThread->wait();  // Ждем завершения всех операций
-            delete logThread;   // Удаляем объект потока
-        }
-
-        // Закрываем файл логирования, если он открыт
-        if(logFile.isOpen())
-        {
-            logFile.close();
+            workerThread->quit();
+            workerThread->wait();
+            delete workerThread;
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Запрет копирования и перемещения
-    // -------------------------------------------------------------------------
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
-    Logger(Logger&&) = delete;
-    Logger& operator=(Logger&&) = delete;
 
-    QFile logFile;        // Файл для логирования
-    QTextStream out;      // Поток для записи текста в файл
-    QMutex mtx;           // Мьютекс для потокобезопасной записи
-    logLevel minLevel = logLevel::Info; // Минимальный уровень логирования
-    QThread* logThread;   // Поток, в котором работает Logger
+private:
+    //структура логирования для игр
+    struct GameInfo
+    {
+        std::unique_ptr<QFile> gameFile;
+        std::unique_ptr<QTextStream> gameStream;
+        QString path;
+    };
+    // system log
+    QString baseSystemDir;
+    QFile systemFile;
+    QTextStream systemStream;
+
+    // gameplay logs
+    QString baseGamesDir;
+    std::unordered_map<QString, GameInfo> gameLogMap;
+
+    QMutex mtx;
+    LogLevel minLevel = LogLevel::Info;
+    QThread* workerThread = nullptr;
+    bool ready = false;
 };

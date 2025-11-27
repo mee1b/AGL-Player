@@ -86,6 +86,7 @@
     <property name="title">
      <string>Просмотр</string>
     </property>
+    <addaction name="gameLogFile"/>
    </widget>
    <widget class="QMenu" name="soundMenu">
     <property name="focusPolicy">
@@ -264,6 +265,11 @@
   <action name="redo">
    <property name="text">
     <string>Вернуть последнее действие</string>
+   </property>
+  </action>
+  <action name="gameLogFile">
+   <property name="text">
+    <string>Открыть файл лога игры</string>
    </property>
   </action>
  </widget>

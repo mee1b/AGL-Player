@@ -61,6 +61,7 @@ private slots:
     void fastLoad();
     void undo();
     void redo();
+    void openGameLog();
 
 private:
     Ui::TopWindow* ui; // Указатель на UI, созданный через Qt Designer
