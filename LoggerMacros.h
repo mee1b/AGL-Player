@@ -3,7 +3,7 @@
 #include <QString>
 #include "logger.h"
 
-// Макросы логирования
+// Макросы логирования системы
 #define LOG_FUNC_START() \
 do { Logger::instance().logSystem(LogLevel::Info, QString("Начало метода %1").arg(Q_FUNC_INFO)); } while(0)
 
