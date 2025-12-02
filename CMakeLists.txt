@@ -44,6 +44,7 @@ add_executable(AGL-Player
     logger.h
     LoggerMacros.h
     statemanager.h statemanager.cpp
+    pluginmanager.h pluginmanager.cpp
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
